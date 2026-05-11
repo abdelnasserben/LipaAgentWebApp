@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Auth;
 
-use App\Services\Mock\AgentAuthService;
+use App\Contracts\Api\AgentAuthApi;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -29,7 +29,7 @@ class Login extends Component
         'phoneNumber'      => 'required|regex:/^\d{4,15}$/',
     ];
 
-    public function requestOtp(): void
+    public function requestOtp(AgentAuthApi $auth): void
     {
         $this->validate([
             'phoneCountryCode' => 'required|max:5',
@@ -38,7 +38,6 @@ class Login extends Component
 
         $this->error = null;
 
-        $auth = new AgentAuthService();
         $result = $auth->requestOtp($this->phoneCountryCode, $this->phoneNumber);
 
         if (! $result) {
@@ -51,7 +50,7 @@ class Login extends Component
         $this->step = 'otp';
     }
 
-    public function verifyOtp(): void
+    public function verifyOtp(AgentAuthApi $auth): void
     {
         $this->validate([
             'otpCode' => 'required|regex:/^\d{6}$/',
@@ -59,7 +58,6 @@ class Login extends Component
 
         $this->error = null;
 
-        $auth = new AgentAuthService();
         if (! $auth->verifyOtp($this->challengeId, $this->otpCode)) {
             $this->error = 'Code incorrect ou expiré.';
             return;
@@ -80,9 +78,9 @@ class Login extends Component
         $this->error = null;
     }
 
-    public function resend(): void
+    public function resend(AgentAuthApi $auth): void
     {
-        $this->requestOtp();
+        $this->requestOtp($auth);
     }
 
     public function render(): \Illuminate\View\View

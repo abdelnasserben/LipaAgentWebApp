@@ -1,0 +1,32 @@
+[
+    {
+        "customerId": "cust_01HXKZ9P2Q3R4S5T6U7VALI1",
+        "externalRef": "CUST-00201",
+        "fullName": "Ali Hassan",
+        "phoneCountryCode": "269",
+        "phoneNumber": "3201234",
+        "kycLevel": "KYC_BASIC",
+        "status": "ACTIVE",
+        "walletId": "wlt_cust_01A2B3C4D5E6F7G8H9"
+    },
+    {
+        "customerId": "cust_02HXKZ9P2Q3R4S5T6U7VFAT2",
+        "externalRef": "CUST-00347",
+        "fullName": "Fatouma Youssouf",
+        "phoneCountryCode": "269",
+        "phoneNumber": "3219876",
+        "kycLevel": "KYC_VERIFIED",
+        "status": "ACTIVE",
+        "walletId": "wlt_cust_02A2B3C4D5E6F7G8H9"
+    },
+    {
+        "customerId": "cust_03HXKZ9P2Q3R4S5T6U7VOMA3",
+        "externalRef": "CUST-00519",
+        "fullName": "Omar Abdallah",
+        "phoneCountryCode": "269",
+        "phoneNumber": "3445566",
+        "kycLevel": "KYC_BASIC",
+        "status": "SUSPENDED",
+        "walletId": "wlt_cust_03A2B3C4D5E6F7G8H9"
+    }
+]

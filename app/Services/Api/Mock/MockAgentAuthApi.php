@@ -2,18 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Mock;
+namespace App\Services\Api\Mock;
 
+use App\Contracts\Api\AgentAuthApi;
+use App\Services\Api\Support\FixtureLoader;
 use Illuminate\Support\Str;
 
-class AgentAuthService
+final class MockAgentAuthApi implements AgentAuthApi
 {
-    private const AGENT_PHONE_COUNTRY_CODE = '269';
-    private const AGENT_PHONE_NUMBER       = '3201456';
-
     public function requestOtp(string $phoneCountryCode, string $phoneNumber): array|false
     {
-        if ($phoneCountryCode !== self::AGENT_PHONE_COUNTRY_CODE || $phoneNumber !== self::AGENT_PHONE_NUMBER) {
+        $profile = FixtureLoader::load('agent/profile');
+
+        if ($phoneCountryCode !== ($profile['phoneCountryCode'] ?? null)
+            || $phoneNumber !== ($profile['phoneNumber'] ?? null)) {
             return false;
         }
 

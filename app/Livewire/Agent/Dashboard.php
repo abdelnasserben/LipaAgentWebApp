@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Agent;
 
-use App\Services\Mock\AgentService;
-use App\Services\Mock\TransactionService;
+use App\Contracts\Api\AgentApi;
+use App\Contracts\Api\TransactionApi;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -22,15 +22,12 @@ class Dashboard extends Component
     public bool $balanceVisible = true;
     public ?array $selectedTransaction = null;
 
-    public function mount(): void
+    public function mount(AgentApi $agent, TransactionApi $transactions): void
     {
-        $agentService = new AgentService();
-        $txnService   = new TransactionService();
-
-        $this->profile = $agentService->getProfile();
-        $this->balance = $agentService->getBalance();
-        $this->summary = $agentService->getDailySummary();
-        $this->recentTransactions = array_slice($txnService->getTransactions()['data'], 0, 5);
+        $this->profile            = $agent->getProfile();
+        $this->balance            = $agent->getBalance();
+        $this->summary            = $agent->getDailySummary();
+        $this->recentTransactions = array_slice($transactions->getTransactions()['data'], 0, 5);
     }
 
     public function toggleBalance(): void
@@ -38,10 +35,9 @@ class Dashboard extends Component
         $this->balanceVisible = ! $this->balanceVisible;
     }
 
-    public function selectTransaction(string $id): void
+    public function selectTransaction(string $id, TransactionApi $transactions): void
     {
-        $txnService = new TransactionService();
-        $this->selectedTransaction = $txnService->getTransaction($id);
+        $this->selectedTransaction = $transactions->getTransaction($id);
     }
 
     public function closeTransaction(): void

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Agent;
 
-use App\Services\Mock\AgentService;
-use App\Services\Mock\LimitsService;
+use App\Contracts\Api\AgentApi;
+use App\Contracts\Api\LimitsApi;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -21,10 +21,10 @@ class Profile extends Component
     public bool $totpSetupOpen = false;
     public bool $showSignOutConfirm = false;
 
-    public function mount(): void
+    public function mount(AgentApi $agent, LimitsApi $limits): void
     {
-        $this->profile = (new AgentService())->getProfile();
-        $this->limits  = (new LimitsService())->getLimits();
+        $this->profile = $agent->getProfile();
+        $this->limits  = $limits->getLimits();
     }
 
     public function switchTab(string $tab): void

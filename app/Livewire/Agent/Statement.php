@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Agent;
 
-use App\Services\Mock\TransactionService;
+use App\Contracts\Api\TransactionApi;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -23,26 +23,24 @@ class Statement extends Component
 
     public ?array $selectedEntry = null;
 
-    public function mount(): void
+    public function mount(TransactionApi $transactions): void
     {
-        $this->loadEntries();
+        $this->loadEntries($transactions);
     }
 
-    public function updatedFilterFrom(): void
+    public function updatedFilterFrom(TransactionApi $transactions): void
     {
-        $this->loadEntries();
+        $this->loadEntries($transactions);
     }
 
-    public function updatedFilterTo(): void
+    public function updatedFilterTo(TransactionApi $transactions): void
     {
-        $this->loadEntries();
+        $this->loadEntries($transactions);
     }
 
-    public function loadEntries(): void
+    public function loadEntries(TransactionApi $transactions): void
     {
-        $service = new TransactionService();
-
-        $result = $service->getStatements([
+        $result = $transactions->getStatements([
             'from' => $this->filterFrom,
             'to'   => $this->filterTo,
         ]);

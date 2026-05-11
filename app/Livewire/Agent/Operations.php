@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Agent;
 
-use App\Services\Mock\AgentService;
-use App\Services\Mock\OperationsService;
+use App\Contracts\Api\OperationsApi;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -49,7 +48,7 @@ class Operations extends Component
 
     // ── Cash-in ───────────────────────────────────────────
 
-    public function lookupCustomer(): void
+    public function lookupCustomer(OperationsApi $operations): void
     {
         $this->validate([
             'ciPhoneNumber' => 'required|regex:/^\d{4,15}$/',
@@ -59,8 +58,7 @@ class Operations extends Component
         ]);
 
         $this->ciError = null;
-        $service = new OperationsService();
-        $customer = $service->lookupCustomer($this->ciPhoneCountryCode, $this->ciPhoneNumber);
+        $customer = $operations->lookupCustomer($this->ciPhoneCountryCode, $this->ciPhoneNumber);
 
         if (! $customer) {
             $this->ciError = 'Client introuvable pour ce numéro.';
@@ -93,7 +91,7 @@ class Operations extends Component
         $this->ciAmount = (string) $amount;
     }
 
-    public function submitCashIn(): void
+    public function submitCashIn(OperationsApi $operations): void
     {
         $this->validate([
             'ciAmount' => 'required|integer|min:1',
@@ -104,8 +102,7 @@ class Operations extends Component
         ]);
 
         $this->ciError = null;
-        $service = new OperationsService();
-        $result = $service->processCashIn([
+        $result = $operations->processCashIn([
             'customerId' => $this->ciCustomer['customerId'],
             'amount'     => (int) $this->ciAmount,
         ]);
@@ -156,12 +153,11 @@ class Operations extends Component
         $this->coStep = 'confirm';
     }
 
-    public function submitCashOut(): void
+    public function submitCashOut(OperationsApi $operations): void
     {
         $this->coError = null;
-        $service = new OperationsService();
 
-        $result = $service->processCashOut([
+        $result = $operations->processCashOut([
             'merchantId' => $this->coMerchant['merchantId'],
             'amount'     => (int) $this->coAmount,
         ]);

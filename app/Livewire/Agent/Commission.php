@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Agent;
 
-use App\Services\Mock\CommissionService;
+use App\Contracts\Api\CommissionApi;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -19,25 +19,22 @@ class Commission extends Component
 
     public string $filterStatus = '';
 
-    public function mount(): void
+    public function mount(CommissionApi $commissions): void
     {
-        $this->loadData();
+        $this->loadData($commissions);
     }
 
-    public function updatedFilterStatus(): void
+    public function updatedFilterStatus(CommissionApi $commissions): void
     {
-        $service = new CommissionService();
-        $result  = $service->getCommissions(['status' => $this->filterStatus]);
+        $result = $commissions->getCommissions(['status' => $this->filterStatus]);
 
         $this->commissions = $result['data'];
     }
 
-    public function loadData(): void
+    public function loadData(CommissionApi $commissions): void
     {
-        $service = new CommissionService();
-
-        $this->summary     = $service->getSummary();
-        $result            = $service->getCommissions(['status' => $this->filterStatus]);
+        $this->summary     = $commissions->getSummary();
+        $result            = $commissions->getCommissions(['status' => $this->filterStatus]);
         $this->commissions = $result['data'];
     }
 

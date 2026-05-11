@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Agent;
 
-use App\Services\Mock\TransactionService;
+use App\Contracts\Api\TransactionApi;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -25,31 +25,29 @@ class Transactions extends Component
 
     public ?array $selectedTransaction = null;
 
-    public function mount(): void
+    public function mount(TransactionApi $transactions): void
     {
-        $this->loadTransactions();
+        $this->loadTransactions($transactions);
     }
 
-    public function updatedSearch(): void
+    public function updatedSearch(TransactionApi $transactions): void
     {
-        $this->loadTransactions();
+        $this->loadTransactions($transactions);
     }
 
-    public function updatedFilterStatus(): void
+    public function updatedFilterStatus(TransactionApi $transactions): void
     {
-        $this->loadTransactions();
+        $this->loadTransactions($transactions);
     }
 
-    public function updatedFilterType(): void
+    public function updatedFilterType(TransactionApi $transactions): void
     {
-        $this->loadTransactions();
+        $this->loadTransactions($transactions);
     }
 
-    public function loadTransactions(): void
+    public function loadTransactions(TransactionApi $transactions): void
     {
-        $service = new TransactionService();
-
-        $result = $service->getTransactions([
+        $result = $transactions->getTransactions([
             'status' => $this->filterStatus,
             'type'   => $this->filterType,
             'search' => $this->search,
@@ -69,10 +67,9 @@ class Transactions extends Component
         $this->pagination   = $result['pagination'];
     }
 
-    public function selectTransaction(string $id): void
+    public function selectTransaction(string $id, TransactionApi $transactions): void
     {
-        $service = new TransactionService();
-        $this->selectedTransaction = $service->getTransaction($id);
+        $this->selectedTransaction = $transactions->getTransaction($id);
     }
 
     public function closeTransaction(): void

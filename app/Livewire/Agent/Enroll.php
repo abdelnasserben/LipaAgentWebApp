@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Agent;
 
-use App\Services\Mock\AgentService;
-use App\Services\Mock\CardService;
-use App\Services\Mock\EnrollService;
+use App\Contracts\Api\AgentApi;
+use App\Contracts\Api\CardApi;
+use App\Contracts\Api\EnrollApi;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -52,14 +52,14 @@ class Enroll extends Component
         }
     }
 
-    public function nextStep(): void
+    public function nextStep(EnrollApi $enroll, AgentApi $agent, CardApi $cards): void
     {
         $this->resetValidation();
 
         match ($this->step) {
             1 => $this->validateStep1(),
             2 => $this->step = 3,
-            3 => $this->submitEnrollment(),
+            3 => $this->submitEnrollment($enroll, $agent, $cards),
             default => null,
         };
     }
@@ -88,19 +88,17 @@ class Enroll extends Component
         $this->step = 2;
     }
 
-    public function submitEnrollment(): void
+    public function submitEnrollment(EnrollApi $enroll, AgentApi $agent, CardApi $cards): void
     {
         $this->loading = true;
 
-        $service = new EnrollService();
-
-        $this->enrollResult = $service->enrollCustomer([
+        $this->enrollResult = $enroll->enrollCustomer([
             'fullName'         => $this->fullName,
             'dateOfBirth'      => $this->dateOfBirth,
             'phoneCountryCode' => $this->phoneCountryCode,
             'phoneNumber'      => $this->phoneNumber,
             'nationalIdNumber' => $this->nationalIdNumber,
-            'nationalIdType'   => $this->nationalIdType,
+            'nationalIdType'  => $this->nationalIdType,
             'addressIsland'    => $this->addressIsland ?: null,
             'addressCity'      => $this->addressCity ?: null,
             'addressDistrict'  => $this->addressDistrict ?: null,
@@ -110,7 +108,7 @@ class Enroll extends Component
         // Upload any queued KYC documents
         if (! empty($this->kycDocuments)) {
             foreach ($this->kycDocuments as $doc) {
-                $service->uploadKycDocument($this->enrollResult['customerId'], [
+                $enroll->uploadKycDocument($this->enrollResult['customerId'], [
                     'documentType' => $doc['type'],
                     'filename'     => $doc['filename'],
                 ]);
@@ -118,11 +116,11 @@ class Enroll extends Component
         }
 
         // Check if agent can sell cards
-        $agentProfile       = (new AgentService())->getProfile();
+        $agentProfile        = $agent->getProfile();
         $this->offerCardSale = $agentProfile['canSellCards'] ?? false;
 
         if ($this->offerCardSale) {
-            $this->cardStock = (new CardService())->getCardStock();
+            $this->cardStock = $cards->getCardStock();
         }
 
         $this->loading = false;
@@ -150,9 +148,9 @@ class Enroll extends Component
         $this->selectedNfcUid = $nfcUid;
     }
 
-    public function finish(): mixed
+    public function finish(): void
     {
-        return $this->redirect(route('dashboard'), navigate: true);
+        $this->redirect(route('dashboard'), navigate: true);
     }
 
     public function render(): \Illuminate\View\View
