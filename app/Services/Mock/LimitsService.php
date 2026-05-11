@@ -9,6 +9,11 @@ class LimitsService
     public function getLimits(): array
     {
         return [
+            'float' => [
+                'current' => 184500,
+                'min'     => 20000,
+                'max'     => 500000,
+            ],
             'cashIn' => [
                 'daily' => [
                     'limit' => 200000,

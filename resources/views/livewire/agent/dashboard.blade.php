@@ -1,6 +1,6 @@
 <div>
     {{-- Balance hero (dark header) --}}
-    <div style="background:var(--sidebar-bg);padding:24px 20px 28px;position:relative;overflow:hidden;">
+    <div style="margin:16px 16px 0;background:var(--sidebar-bg);border-radius:12px;padding:24px 20px 28px;position:relative;overflow:hidden;">
         {{-- Grid texture --}}
         <div style="position:absolute;inset:0;opacity:0.04;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;"></div>
 

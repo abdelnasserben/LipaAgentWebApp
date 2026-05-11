@@ -68,16 +68,13 @@
                 {{-- Phone --}}
                 <div style="margin-bottom:14px;">
                     <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">Numéro de téléphone <span style="color:var(--red);">*</span></label>
-                    <div style="display:flex;gap:8px;">
-                        <div style="position:relative;width:88px;flex-shrink:0;">
-                            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-secondary);pointer-events:none;">+</span>
-                            <input type="text" wire:model="phoneCountryCode" maxlength="5"
-                                style="width:100%;padding:12px 14px 12px 26px;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:13px;outline:none;box-sizing:border-box;"
-                                inputmode="numeric" />
+                    <div style="display:flex;gap:8px;align-items:stretch;">
+                        <div style="display:flex;align-items:center;justify-content:center;padding:0 14px;flex-shrink:0;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:14px;font-weight:700;">
+                            +{{ $phoneCountryCode }}
                         </div>
                         <input type="tel" wire:model="phoneNumber"
-                            placeholder="3201234"
-                            style="flex:1;padding:12px 14px;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:16px;outline:none;letter-spacing:0.05em;"
+                            placeholder="3XX XXXX"
+                            style="flex:1;min-width:0;padding:12px 14px;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:16px;outline:none;letter-spacing:0.05em;box-sizing:border-box;"
                             inputmode="numeric" />
                     </div>
                     @error('phoneNumber') <p style="font-size:11px;color:var(--red);margin-top:4px;">{{ $message }}</p> @enderror
@@ -250,7 +247,7 @@
                     <button wire:click="nextStep" wire:loading.attr="disabled" type="button"
                         style="padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
                         <span wire:loading.remove wire:target="nextStep">Soumettre</span>
-                        <span wire:loading wire:target="nextStep" style="display:flex;align-items:center;gap:8px;">
+                        <span wire:loading.flex wire:target="nextStep" style="display:none;align-items:center;gap:8px;">
                             <x-spinner :size="16" />
                             Enrôlement…
                         </span>

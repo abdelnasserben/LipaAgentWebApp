@@ -66,6 +66,7 @@ body {
     overflow: hidden;
     transition: width 0.2s ease;
     width: 64px;
+    padding: 20px 0 16px;
 }
 
 @media (min-width: 640px) {
@@ -100,9 +101,18 @@ body {
     border-top: 1px solid var(--border-color);
 }
 
+/* On mobile, the bottom nav is fixed (64px + safe area), so reserve space
+   at the bottom of the scrollable content to ensure full visibility. */
+.app-content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom) + 16px);
+}
+
 @media (min-width: 640px) {
     .app-bottom-nav {
         display: none;
+    }
+    .app-content {
+        padding-bottom: 0;
     }
 }
 

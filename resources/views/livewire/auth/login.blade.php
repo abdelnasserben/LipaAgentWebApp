@@ -22,28 +22,24 @@
         {{-- Step 1: Phone number --}}
         <form wire:submit="requestOtp">
             <div style="margin-bottom:20px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:0.03em;margin-bottom:6px;">INDICATIF PAYS</label>
-                <div style="display:flex;gap:8px;">
-                    <div style="position:relative;width:90px;flex-shrink:0;">
-                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-secondary);">+</span>
-                        <input type="text" wire:model="phoneCountryCode" maxlength="5"
-                            style="width:100%;padding:12px 14px 12px 24px;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:inherit;font-size:14px;outline:none;"
-                            inputmode="numeric" pattern="\d*" />
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:0.03em;margin-bottom:6px;">NUMÉRO DE TÉLÉPHONE</label>
+                <div style="display:flex;gap:8px;align-items:stretch;">
+                    <div style="display:flex;align-items:center;justify-content:center;padding:0 14px;flex-shrink:0;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:14px;font-weight:700;">
+                        +{{ $phoneCountryCode }}
                     </div>
-                    <div style="flex:1;">
-                        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:0.03em;margin-bottom:6px;">NUMÉRO DE TÉLÉPHONE</label>
-                        <input type="tel" wire:model="phoneNumber" placeholder="3201234"
-                            style="width:100%;padding:12px 14px;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:16px;outline:none;letter-spacing:0.05em;"
-                            inputmode="numeric" pattern="\d*" autofocus />
-                    </div>
+                    <input type="tel" wire:model="phoneNumber" placeholder="3XX XXXX"
+                        style="flex:1;min-width:0;padding:12px 14px;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:16px;outline:none;letter-spacing:0.05em;box-sizing:border-box;"
+                        inputmode="numeric" pattern="\d*" autofocus />
                 </div>
+                @error('phoneCountryCode') <p style="font-size:11px;color:var(--red);margin-top:6px;">{{ $message }}</p> @enderror
+                @error('phoneNumber') <p style="font-size:11px;color:var(--red);margin-top:6px;">{{ $message }}</p> @enderror
                 <p style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Entrez votre numéro d'agent enregistré</p>
             </div>
 
             <button type="submit" wire:loading.attr="disabled"
                 style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
                 <span wire:loading.remove>Recevoir le code</span>
-                <span wire:loading style="display:flex;align-items:center;gap:8px;">
+                <span wire:loading.flex style="display:none;align-items:center;gap:8px;">
                     <x-spinner :size="16" />
                     Envoi en cours…
                 </span>
@@ -85,7 +81,7 @@
                 <button type="submit" wire:loading.attr="disabled"
                     style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;">
                     <span wire:loading.remove>Valider</span>
-                    <span wire:loading style="display:flex;align-items:center;gap:8px;">
+                    <span wire:loading.flex style="display:none;align-items:center;gap:8px;">
                         <x-spinner :size="16" />
                         Vérification…
                     </span>

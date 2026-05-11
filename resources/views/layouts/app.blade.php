@@ -97,7 +97,7 @@
         </div>
 
         {{-- Page content --}}
-        <div style="flex:1;overflow-y:auto;background:var(--bg);">
+        <div class="app-content" style="flex:1;overflow-y:auto;background:var(--bg);">
             {{ $slot }}
         </div>
 
@@ -112,7 +112,6 @@
                 ];
             @endphp
             @foreach($bottomTabs as $tab)
-                @php $isActive = $currentRoute === $tab['path'] ?? request()->routeIs($tab['route']) @endphp
                 @php $tabActive = request()->routeIs($tab['route']) || str_starts_with(request()->path(), $tab['route']) @endphp
                 <a href="{{ route($tab['route']) }}" wire:navigate
                    style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:{{ $tabActive ? 'var(--accent)' : 'var(--text-secondary)' }};padding:6px 4px;position:relative;transition:color 0.15s;">

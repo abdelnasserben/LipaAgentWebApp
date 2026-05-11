@@ -97,7 +97,7 @@
                                 {{ $sign }}{{ number_format($entry['amount'], 0, ',', ' ') }}
                             </div>
                             <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">
-                                Solde: {{ number_format($entry['runningBalance'], 0, ',', ' ') }} KMF
+                                → {{ number_format($entry['runningBalance'], 0, ',', ' ') }} KMF
                             </div>
                         </div>
                     </button>

@@ -42,20 +42,19 @@ class Enroll extends Component
     public array $cardStock         = [];
 
     // ── General ────────────────────────────────────────────────────
-    public array $errors  = [];
     public bool $loading  = false;
 
     public function goToStep(int $n): void
     {
         if ($n >= 1 && $n < $this->step) {
-            $this->step   = $n;
-            $this->errors = [];
+            $this->step = $n;
+            $this->resetValidation();
         }
     }
 
     public function nextStep(): void
     {
-        $this->errors = [];
+        $this->resetValidation();
 
         match ($this->step) {
             1 => $this->validateStep1(),
