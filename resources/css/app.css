@@ -1,0 +1,162 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../../vendor/livewire/**/*.blade.php';
+
+:root {
+    --bg: oklch(0.975 0.005 80);
+    --surface: #ffffff;
+    --sidebar-bg: oklch(0.13 0.015 255);
+    --row-hover: oklch(0.97 0.006 80);
+    --text-primary: oklch(0.16 0.012 255);
+    --text-secondary: oklch(0.48 0.012 255);
+    --border-color: oklch(0.91 0.005 255);
+    --accent: oklch(0.52 0.16 148);
+    --accent-bg: oklch(0.96 0.04 148);
+
+    --green: oklch(0.52 0.16 148);
+    --green-bg: oklch(0.96 0.04 148);
+
+    --amber: oklch(0.65 0.15 70);
+    --amber-bg: oklch(0.97 0.04 90);
+
+    --red: oklch(0.55 0.18 25);
+    --red-bg: oklch(0.97 0.04 25);
+
+    --blue: oklch(0.52 0.16 240);
+    --blue-bg: oklch(0.96 0.04 240);
+
+    --purple: oklch(0.52 0.16 295);
+    --purple-bg: oklch(0.96 0.04 295);
+
+    --teal: oklch(0.55 0.14 195);
+    --teal-bg: oklch(0.96 0.04 195);
+
+    --indigo: oklch(0.50 0.18 265);
+    --indigo-bg: oklch(0.96 0.04 265);
+}
+
+html,
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+}
+
+/* App shell layout */
+.app-shell {
+    display: flex;
+    flex-direction: row;
+    min-height: 100dvh;
+    width: 100%;
+}
+
+.app-sidebar {
+    display: none;
+    flex-direction: column;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    overflow: hidden;
+    transition: width 0.2s ease;
+    width: 64px;
+}
+
+@media (min-width: 640px) {
+    .app-sidebar {
+        display: flex;
+        width: 64px;
+    }
+}
+
+@media (min-width: 900px) {
+    .app-sidebar {
+        width: 200px;
+    }
+}
+
+.app-main {
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+}
+
+.app-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--surface);
+    border-top: 1px solid var(--border-color);
+}
+
+@media (min-width: 640px) {
+    .app-bottom-nav {
+        display: none;
+    }
+}
+
+.sidebar-label {
+    display: none;
+}
+
+@media (min-width: 900px) {
+    .sidebar-label {
+        display: inline;
+    }
+}
+
+.sidebar-label-block {
+    display: none;
+}
+
+@media (min-width: 900px) {
+    .sidebar-label-block {
+        display: block;
+    }
+}
+
+/* Scrollbar styling */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.75 0.01 255 / 0.4) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: oklch(0.75 0.01 255 / 0.4);
+    border-radius: 2px;
+}
+
+/* Spinner animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* DM Mono utility */
+.font-mono-data {
+    font-family: 'DM Mono', ui-monospace, monospace;
+}
