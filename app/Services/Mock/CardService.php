@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Mock;
+
+class CardService
+{
+    public function getCardStock(): array
+    {
+        return [
+            [
+                'id'                 => 'crd_01HXKZ9P2Q3R4S5T6U7VCARD1',
+                'nfcUid'             => '04AABB01CCDDE0FF',
+                'internalCardNumber' => 'CARD-00421',
+                'batchRef'           => 'BATCH-2026-04',
+                'producedAt'         => '2026-04-01',
+                'assignedAt'         => '2026-04-15T08:00:00Z',
+                'status'             => 'ASSIGNED_TO_AGENT',
+            ],
+            [
+                'id'                 => 'crd_02HXKZ9P2Q3R4S5T6U7VCARD2',
+                'nfcUid'             => '04AABB02CCDDE1FF',
+                'internalCardNumber' => 'CARD-00422',
+                'batchRef'           => 'BATCH-2026-04',
+                'producedAt'         => '2026-04-01',
+                'assignedAt'         => '2026-04-15T08:00:00Z',
+                'status'             => 'ASSIGNED_TO_AGENT',
+            ],
+            [
+                'id'                 => 'crd_03HXKZ9P2Q3R4S5T6U7VCARD3',
+                'nfcUid'             => '04AABB03CCDDE2FF',
+                'internalCardNumber' => 'CARD-00423',
+                'batchRef'           => 'BATCH-2026-04',
+                'producedAt'         => '2026-04-01',
+                'assignedAt'         => '2026-04-15T08:00:00Z',
+                'status'             => 'ASSIGNED_TO_AGENT',
+            ],
+            [
+                'id'                 => 'crd_04HXKZ9P2Q3R4S5T6U7VCARD4',
+                'nfcUid'             => '04AABB04CCDDE3FF',
+                'internalCardNumber' => 'CARD-00424',
+                'batchRef'           => 'BATCH-2026-04',
+                'producedAt'         => '2026-04-01',
+                'assignedAt'         => '2026-04-15T08:00:00Z',
+                'status'             => 'ASSIGNED_TO_AGENT',
+            ],
+            [
+                'id'                 => 'crd_05HXKZ9P2Q3R4S5T6U7VCARD5',
+                'nfcUid'             => '04AABB05CCDDE4FF',
+                'internalCardNumber' => 'CARD-00425',
+                'batchRef'           => 'BATCH-2026-04',
+                'producedAt'         => '2026-04-01',
+                'assignedAt'         => '2026-04-15T08:00:00Z',
+                'status'             => 'ASSIGNED_TO_AGENT',
+            ],
+        ];
+    }
+}
