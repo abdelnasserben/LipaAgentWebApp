@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Lipa — Agent Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* === Same token system as the BO === */
+      --bg:             oklch(0.975 0.005 80);
+      --surface:        #ffffff;
+      --sidebar-bg:     oklch(0.13 0.015 255);
+      --row-hover:      oklch(0.97 0.006 80);
+
+      --text-primary:   oklch(0.16 0.012 255);
+      --text-secondary: oklch(0.48 0.012 255);
+
+      --border-color:   oklch(0.91 0.005 255);
+
+      --accent:         oklch(0.52 0.16 148);
+      --accent-bg:      oklch(0.96 0.04 148);
+
+      --green:          oklch(0.55 0.16 148);
+      --green-bg:       oklch(0.96 0.04 148);
+      --amber:          oklch(0.60 0.15 65);
+      --amber-bg:       oklch(0.97 0.05 65);
+      --red:            oklch(0.55 0.18 25);
+      --red-bg:         oklch(0.97 0.04 25);
+      --blue:           oklch(0.55 0.14 255);
+      --blue-bg:        oklch(0.96 0.04 255);
+      --purple:         oklch(0.52 0.16 290);
+      --purple-bg:      oklch(0.96 0.04 290);
+      --teal:           oklch(0.55 0.13 195);
+      --teal-bg:        oklch(0.96 0.04 195);
+      --indigo:         oklch(0.50 0.16 275);
+      --indigo-bg:      oklch(0.96 0.04 275);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+    }
+
+    #root {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    body {
+      background: var(--bg);
+    }
+
+    /* ── Responsive app shell ────────────────────────────── */
+
+    /* Tablet + desktop: sidebar layout */
+    @media (min-width: 640px) {
+      body { background: oklch(0.94 0.008 255); }
+
+      #root {
+        flex-direction: row;
+        max-width: 1280px;
+        margin: 0 auto;
+        height: 100vh;
+        box-shadow: 0 0 0 1px var(--border-color), 0 8px 60px rgba(0,0,0,0.10);
+        border-radius: 0;
+      }
+    }
+
+    /* ── Sidebar nav (hidden on mobile) ─────────────────── */
+    .app-sidebar {
+      display: none;
+    }
+
+    @media (min-width: 640px) {
+      .app-sidebar {
+        display: flex;
+        flex-direction: column;
+        width: 64px;
+        flex-shrink: 0;
+        background: var(--sidebar-bg);
+        border-right: 1px solid rgba(255,255,255,0.06);
+        align-items: center;
+        padding: 16px 0 20px;
+        gap: 4px;
+        overflow: hidden;
+        transition: width 0.2s ease;
+        z-index: 10;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .app-sidebar {
+        width: 200px;
+        align-items: stretch;
+        padding: 20px 0;
+      }
+    }
+
+    /* ── Main content area ───────────────────────────────── */
+    .app-main {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    /* ── Bottom nav: only on mobile ─────────────────────── */
+    .app-bottom-nav {
+      display: flex;
+    }
+    @media (min-width: 640px) {
+      .app-bottom-nav {
+        display: none;
+      }
+    }
+
+    /* ── Top bar ─────────────────────────────────────────── */
+    .app-top-bar {
+      display: flex;
+    }
+    @media (min-width: 640px) {
+      .app-top-bar {
+        border-bottom: 1px solid var(--border-color);
+      }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+
+    * { -webkit-font-smoothing: antialiased; }
+
+    /* Remove tap highlight on mobile */
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Mock data -->
+  <script src="mockDataAgent.js"></script>
+
+  <!-- Shared primitives -->
+  <script type="text/babel" src="agentShared.jsx"></script>
+
+  <!-- Pages -->
+  <script type="text/babel" src="agentLogin.jsx"></script>
+  <script type="text/babel" src="agentNav.jsx"></script>
+  <script type="text/babel" src="agentDashboard.jsx"></script>
+  <script type="text/babel" src="agentTransactions.jsx"></script>
+  <script type="text/babel" src="agentStatement.jsx"></script>
+  <script type="text/babel" src="agentCommission.jsx"></script>
+  <script type="text/babel" src="agentProfile.jsx"></script>
+  <script type="text/babel" src="agentOperations.jsx"></script>
+  <script type="text/babel" src="agentEnroll.jsx"></script>
+
+  <!-- App root -->
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accentHue": 148,
+      "sidebarShade": "dark"
+    }/*EDITMODE-END*/;
+
+    const PAGE_TITLES = {
+      dashboard:    'Accueil',
+      operations:   'Opérations',
+      enroll:       'Enrôler un client',
+      transactions: 'Transactions',
+      statement:    'Relevé',
+      commission:   'Commission',
+      profile:      'Profil',
+    };
+
+    function AgentApp() {
+      const [user, setUser]             = React.useState(null);
+      const [page, setPage]             = React.useState('dashboard');
+      const [opTab, setOpTab]           = React.useState(null); // optional sub-tab for operations
+      const [toast, setToast]           = React.useState(null);
+      const [tweaks, setTweaks]         = React.useState(TWEAK_DEFAULTS);
+      const [tweaksOpen, setTweaksOpen] = React.useState(false);
+
+      // Navigate with optional sub-tab (used by dashboard quick actions)
+      const handleNavigate = (p, tab) => {
+        setPage(p);
+        if (tab) setOpTab(tab);
+        else setOpTab(null);
+      };
+
+      // Tweaks panel protocol
+      React.useEffect(() => {
+        const handler = e => {
+          if (e.data?.type === '__activate_edit_mode')   setTweaksOpen(true);
+          if (e.data?.type === '__deactivate_edit_mode') setTweaksOpen(false);
+        };
+        window.addEventListener('message', handler);
+        window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+        return () => window.removeEventListener('message', handler);
+      }, []);
+
+      const setTweak = (key, val) => {
+        const next = { ...tweaks, [key]: val };
+        setTweaks(next);
+        window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+      };
+
+      // Apply accent hue
+      React.useEffect(() => {
+        const h = tweaks.accentHue;
+        document.documentElement.style.setProperty('--accent',    `oklch(0.52 0.16 ${h})`);
+        document.documentElement.style.setProperty('--accent-bg', `oklch(0.96 0.04 ${h})`);
+        document.documentElement.style.setProperty('--green',     `oklch(0.55 0.16 ${h})`);
+        document.documentElement.style.setProperty('--green-bg',  `oklch(0.96 0.04 ${h})`);
+      }, [tweaks.accentHue]);
+
+      // Apply sidebar shade
+      React.useEffect(() => {
+        const v = tweaks.sidebarShade === 'darker'
+          ? 'oklch(0.08 0.01 255)'
+          : tweaks.sidebarShade === 'navy'
+            ? 'oklch(0.18 0.02 255)'
+            : 'oklch(0.13 0.015 255)';
+        document.documentElement.style.setProperty('--sidebar-bg', v);
+      }, [tweaks.sidebarShade]);
+
+      const handleLogout = () => { setUser(null); setPage('dashboard'); };
+
+      if (!user) {
+        return <AgentLoginPage onLogin={u => setUser(u)} />;
+      }
+
+      const pages = {
+        dashboard:    <AgentDashboardPage onNavigate={handleNavigate} />,
+        operations:   <AgentOperationsPage initialTab={opTab} />,
+        enroll:       <AgentEnrollPage />,
+        transactions: <AgentTransactionsPage />,
+        statement:    <AgentStatementPage />,
+        commission:   <AgentCommissionPage />,
+        profile:      <AgentProfilePage onLogout={handleLogout} />,
+      };
+
+      const topBarAction = page === 'dashboard' ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--text-secondary)', display: 'flex', padding: 6,
+            borderRadius: 8, position: 'relative',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--row-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 1.5a6 6 0 016 6v3.5l1.5 2H1.5L3 11V7.5a6 6 0 016-6z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+              <path d="M7.5 14.5a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.4"/>
+            </svg>
+            <span style={{ position: 'absolute', top: 5, right: 5, width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid var(--surface)' }}></span>
+          </button>
+          <span style={{ fontSize: 11, fontFamily: 'DM Mono, monospace', color: 'var(--text-secondary)' }}>
+            {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+          </span>
+        </div>
+      ) : undefined;
+
+      return (
+        <div style={{ display: 'flex', width: '100%', height: '100%', overflow: 'hidden' }}>
+          {/* Sidebar — tablet/desktop only (CSS hides on mobile) */}
+          <AgentSidebar activePage={page} onNavigate={handleNavigate} onLogout={handleLogout} />
+
+          {/* Main column */}
+          <div className="app-main">
+            <AgentTopBar title={PAGE_TITLES[page] || page} action={topBarAction} />
+
+            <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              {pages[page] || pages.dashboard}
+            </div>
+
+            {/* Bottom nav — mobile only (CSS hides on tablet+) */}
+            <div className="app-bottom-nav">
+              <AgentNav activePage={page} onNavigate={handleNavigate} />
+            </div>
+          </div>
+
+          {/* Tweaks panel */}
+          {tweaksOpen && (
+            <div style={{
+              position: 'fixed', bottom: 80, right: 20, zIndex: 400,
+              background: 'var(--surface)', border: '1px solid var(--border-color)',
+              borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.14)',
+              width: 230, padding: 16,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>Tweaks</span>
+                <button onClick={() => { setTweaksOpen(false); window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M11 3L3 11M3 3l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Accent</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {[{hue:148,label:'Green'},{hue:255,label:'Blue'},{hue:290,label:'Purple'},{hue:25,label:'Red'},{hue:65,label:'Amber'}].map(({ hue, label }) => (
+                    <button key={hue} onClick={() => setTweak('accentHue', hue)} title={label} style={{
+                      width: 24, height: 24, borderRadius: '50%',
+                      border: tweaks.accentHue === hue ? '2.5px solid var(--text-primary)' : '2px solid transparent',
+                      background: `oklch(0.52 0.16 ${hue})`, cursor: 'pointer', outline: 'none',
+                      transition: 'transform 0.1s',
+                      transform: tweaks.accentHue === hue ? 'scale(1.18)' : 'scale(1)',
+                    }} />
+                  ))}
+                </div>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Sidebar Shade</div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {[['dark','Dark'],['darker','Darker'],['navy','Navy']].map(([val, label]) => (
+                    <button key={val} onClick={() => setTweak('sidebarShade', val)} style={{
+                      padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border-color)',
+                      fontSize: 10, cursor: 'pointer', fontFamily: 'inherit',
+                      background: tweaks.sidebarShade === val ? 'var(--text-primary)' : 'var(--surface)',
+                      color: tweaks.sidebarShade === val ? '#fff' : 'var(--text-secondary)',
+                    }}>{label}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Quick Nav</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {[
+                    ['dashboard',    'Accueil'],
+                    ['operations',   'Opérations'],
+                    ['enroll',       'Enrôlement'],
+                    ['transactions', 'Transactions'],
+                    ['statement',    'Relevé'],
+                    ['commission',   'Commission'],
+                    ['profile',      'Profil'],
+                  ].map(([key, label]) => (
+                    <button key={key} onClick={() => handleNavigate(key)} style={{
+                      padding: '5px 8px', borderRadius: 6, border: 'none',
+                      fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                      background: page === key ? 'var(--accent-bg)' : 'var(--bg)',
+                      color: page === key ? 'var(--accent)' : 'var(--text-secondary)',
+                      fontWeight: page === key ? 600 : 400,
+                    }}>{label}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {toast && (
+            <AgentToast key={toast.id} message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<AgentApp />);
+  </script>
+</body>
+</html>
