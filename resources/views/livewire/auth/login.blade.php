@@ -1,19 +1,25 @@
-<div style="padding:40px 32px;">
+<div class="px-8 py-10">
     {{-- Logo --}}
-    <div style="text-align:center;margin-bottom:36px;">
-        <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:14px;background:var(--sidebar-bg);margin-bottom:14px;">
+    <div class="mb-9 text-center">
+        <div class="mb-3.5 inline-flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-app-sidebar">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M3 7h18v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" fill="white" fill-opacity=".15" stroke="white" stroke-width="1.5"/>
                 <path d="M8 7V5a4 4 0 018 0v2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
                 <path d="M9 13l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
-        <h1 style="font-size:22px;font-weight:800;color:var(--text-primary);letter-spacing:-0.03em;margin:0 0 4px;">Lipa Agent</h1>
-        <p style="font-size:13px;color:var(--text-secondary);margin:0;">Portail opérateur sécurisé</p>
+
+        <h1 class="mb-1 mt-0 text-[22px] font-extrabold tracking-[-0.03em] text-app-text">
+            Lipa Agent
+        </h1>
+
+        <p class="m-0 text-[13px] text-app-muted">
+            Portail opérateur sécurisé
+        </p>
     </div>
 
     @if($error)
-        <div style="background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:20px;font-size:13px;color:var(--red);">
+        <div class="mb-5 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
             {{ $error }}
         </div>
     @endif
@@ -21,81 +27,122 @@
     @if($step === 'phone')
         {{-- Step 1: Phone number --}}
         <form wire:submit="requestOtp">
-            <div style="margin-bottom:20px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:0.03em;margin-bottom:6px;">NUMÉRO DE TÉLÉPHONE</label>
-                <div style="display:flex;gap:8px;align-items:stretch;">
-                    <div style="display:flex;align-items:center;justify-content:center;padding:0 14px;flex-shrink:0;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:14px;font-weight:700;">
+            <div class="mb-5">
+                <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
+                    Numéro de téléphone
+                </label>
+
+                <div class="flex items-stretch gap-2">
+                    <div class="flex shrink-0 items-center justify-center rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 font-mono text-sm font-bold text-app-text">
                         +{{ $phoneCountryCode }}
                     </div>
-                    <input type="tel" wire:model="phoneNumber" placeholder="3XX XXXX"
-                        style="flex:1;min-width:0;padding:12px 14px;border-radius:8px;border:1.5px solid var(--border-color);background:var(--surface);color:var(--text-primary);font-family:'DM Mono',monospace;font-size:16px;outline:none;letter-spacing:0.05em;box-sizing:border-box;"
-                        inputmode="numeric" pattern="\d*" autofocus />
+
+                    <input
+                        type="tel"
+                        wire:model="phoneNumber"
+                        placeholder="3XX XXXX"
+                        inputmode="numeric"
+                        pattern="\d*"
+                        autofocus
+                        class="box-border min-w-0 flex-1 rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base tracking-[0.05em] text-app-text outline-none focus:border-app-accent"
+                    />
                 </div>
-                @error('phoneCountryCode') <p style="font-size:11px;color:var(--red);margin-top:6px;">{{ $message }}</p> @enderror
-                @error('phoneNumber') <p style="font-size:11px;color:var(--red);margin-top:6px;">{{ $message }}</p> @enderror
-                <p style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Entrez votre numéro d'agent enregistré</p>
+
+                @error('phoneCountryCode')
+                    <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                @enderror
+
+                @error('phoneNumber')
+                    <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                @enderror
+
+                <p class="mt-1.5 text-[11px] text-app-muted">
+                    Entrez votre numéro d'agent enregistré
+                </p>
             </div>
 
-            <button type="submit" wire:loading.attr="disabled"
-                style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <button
+                type="submit"
+                wire:loading.attr="disabled"
+                class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70"
+            >
                 <span wire:loading.remove>Recevoir le code</span>
-                <span wire:loading.flex style="display:none;align-items:center;gap:8px;">
+                <span wire:loading.flex class="hidden items-center gap-2">
                     <x-spinner :size="16" />
                     Envoi en cours…
                 </span>
             </button>
         </form>
-
     @else
         {{-- Step 2: OTP code --}}
         <div>
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;">
-                <button wire:click="back" type="button"
-                    style="background:none;border:none;cursor:pointer;color:var(--text-secondary);display:flex;padding:4px;border-radius:6px;">
+            <div class="mb-7 flex items-center gap-2.5">
+                <button
+                    wire:click="back"
+                    type="button"
+                    class="flex cursor-pointer rounded-md border-0 bg-transparent p-1 text-app-muted"
+                >
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <path d="M12.5 5L7.5 10l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
+
                 <div>
-                    <div style="font-size:15px;font-weight:700;color:var(--text-primary);">Vérification</div>
-                    <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Code envoyé au +{{ $phoneCountryCode }} {{ $phoneNumber }}</div>
+                    <div class="text-[15px] font-bold text-app-text">
+                        Vérification
+                    </div>
+                    <div class="mt-0.5 text-xs text-app-muted">
+                        Code envoyé au +{{ $phoneCountryCode }} {{ $phoneNumber }}
+                    </div>
                 </div>
             </div>
 
             <form wire:submit="verifyOtp">
-                <div style="margin-bottom:24px;">
-                    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:0.03em;margin-bottom:12px;text-align:center;">ENTREZ LE CODE À 6 CHIFFRES</label>
+                <div class="mb-6">
+                    <label class="mb-3 block text-center text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
+                        Entrez le code à 6 chiffres
+                    </label>
 
-                    <input type="text" wire:model.live="otpCode"
-                        inputmode="numeric" pattern="\d*" maxlength="6" autocomplete="one-time-code"
+                    <input
+                        type="text"
+                        wire:model.live="otpCode"
+                        inputmode="numeric"
+                        pattern="\d*"
+                        maxlength="6"
+                        autocomplete="one-time-code"
                         placeholder="000000"
-                        style="width:100%;padding:18px;text-align:center;font-family:'DM Mono',monospace;font-size:28px;font-weight:700;letter-spacing:0.3em;border-radius:12px;border:2px solid var(--border-color);background:var(--surface);color:var(--text-primary);outline:none;transition:border-color 0.15s;"
-                        onfocus="this.style.borderColor='var(--accent)'"
-                        onblur="this.style.borderColor='var(--border-color)'" />
+                        class="w-full rounded-xl border-2 border-app-border bg-app-surface p-[18px] text-center font-mono text-[28px] font-bold tracking-[0.3em] text-app-text outline-none transition-colors focus:border-app-accent"
+                    />
 
-                    <p style="font-size:11px;color:var(--text-secondary);text-align:center;margin-top:8px;">
+                    <p class="mt-2 text-center text-[11px] text-app-muted">
                         Code valide 5 minutes. Vérifiez vos SMS.
                     </p>
                 </div>
 
-                <button type="submit" wire:loading.attr="disabled"
-                    style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;">
+                <button
+                    type="submit"
+                    wire:loading.attr="disabled"
+                    class="mb-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                >
                     <span wire:loading.remove>Valider</span>
-                    <span wire:loading.flex style="display:none;align-items:center;gap:8px;">
+                    <span wire:loading.flex class="hidden items-center gap-2">
                         <x-spinner :size="16" />
                         Vérification…
                     </span>
                 </button>
 
-                <button type="button" wire:click="resend"
-                    style="width:100%;padding:12px;background:transparent;color:var(--text-secondary);border:1px solid var(--border-color);border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;">
+                <button
+                    type="button"
+                    wire:click="resend"
+                    class="w-full cursor-pointer rounded-[10px] border border-app-border bg-transparent p-3 text-sm font-semibold text-app-muted"
+                >
                     Renvoyer le code
                 </button>
             </form>
         </div>
     @endif
 
-    <p style="text-align:center;font-size:11px;color:var(--text-secondary);margin-top:32px;opacity:0.7;">
+    <p class="mt-8 text-center text-[11px] text-app-muted opacity-70">
         Lipa Agent Portal · Accès sécurisé
     </p>
 </div>

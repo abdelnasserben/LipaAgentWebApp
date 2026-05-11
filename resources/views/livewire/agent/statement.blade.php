@@ -1,23 +1,27 @@
 <div>
     {{-- Date range filter --}}
-    <div style="padding:12px 16px 0;">
-        <div style="background:var(--surface);border:1px solid var(--border-color);border-radius:10px;padding:14px 16px;margin-bottom:4px;">
-            <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:10px;">Période</div>
-            <div style="display:flex;gap:10px;align-items:center;">
-                <div style="flex:1;">
-                    <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;">Du</label>
+    <div class="px-4 pt-3">
+        <div class="mb-1 rounded-[10px] border border-app-border bg-app-surface px-4 py-3.5">
+            <div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                Période
+            </div>
+
+            <div class="flex items-center gap-2.5">
+                <div class="flex-1">
+                    <label class="mb-1 block text-[11px] text-app-muted">Du</label>
                     <input
                         type="date"
                         wire:model.live="filterFrom"
-                        style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border-color);border-radius:7px;background:var(--bg);color:var(--text-primary);outline:none;"
+                        class="box-border w-full rounded-[7px] border border-app-border bg-app-bg px-2.5 py-[7px] text-[13px] text-app-text outline-none focus:border-app-accent"
                     />
                 </div>
-                <div style="flex:1;">
-                    <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;">Au</label>
+
+                <div class="flex-1">
+                    <label class="mb-1 block text-[11px] text-app-muted">Au</label>
                     <input
                         type="date"
                         wire:model.live="filterTo"
-                        style="width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;border:1px solid var(--border-color);border-radius:7px;background:var(--bg);color:var(--text-primary);outline:none;"
+                        class="box-border w-full rounded-[7px] border border-app-border bg-app-bg px-2.5 py-[7px] text-[13px] text-app-text outline-none focus:border-app-accent"
                     />
                 </div>
             </div>
@@ -25,15 +29,17 @@
     </div>
 
     {{-- Entries list --}}
-    <div style="padding:12px 16px 80px;">
+    <div class="px-4 pb-20 pt-3">
         @php
             use Carbon\Carbon;
-            $today     = Carbon::today();
+
+            $today = Carbon::today();
             $yesterday = Carbon::yesterday();
 
             $grouped = [];
             foreach ($entries as $entry) {
                 $date = Carbon::parse($entry['postedAt'])->startOfDay();
+
                 if ($date->isSameDay($today)) {
                     $key = 'Aujourd\'hui';
                 } elseif ($date->isSameDay($yesterday)) {
@@ -41,62 +47,69 @@
                 } else {
                     $key = Carbon::parse($entry['postedAt'])->isoFormat('D MMMM YYYY');
                 }
+
                 $grouped[$key][] = $entry;
             }
         @endphp
 
         @forelse($grouped as $dateLabel => $group)
             {{-- Date group label --}}
-            <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-secondary);margin:12px 0 6px;{{ !$loop->first ? 'margin-top:20px;' : '' }}">
+            <div @class([
+                'mb-1.5 text-[11px] font-bold uppercase tracking-[0.07em] text-app-muted',
+                'mt-3' => $loop->first,
+                'mt-5' => ! $loop->first,
+            ])>
                 {{ $dateLabel }}
             </div>
 
             {{-- Group card --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);overflow:hidden;">
+            <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
                 @foreach($group as $entry)
                     @php
-                        $isCredit    = $entry['entryType'] === 'CREDIT';
-                        $signColor   = $isCredit ? 'var(--green)' : 'var(--red)';
-                        $iconBg      = $isCredit ? 'var(--green-bg)' : 'var(--red-bg)';
-                        $sign        = $isCredit ? '+' : '−';
-                        $time        = Carbon::parse($entry['postedAt'])->format('H:i');
+                        $isCredit = $entry['entryType'] === 'CREDIT';
+                        $sign = $isCredit ? '+' : '−';
+                        $time = Carbon::parse($entry['postedAt'])->format('H:i');
+                        $signClass = $isCredit ? 'text-app-green' : 'text-app-red';
+                        $iconBgClass = $isCredit ? 'bg-app-green-bg' : 'bg-app-red-bg';
                     @endphp
+
                     <button
                         wire:click="selectEntry('{{ $entry['id'] }}')"
                         type="button"
-                        style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:left;{{ !$loop->last ? 'border-bottom:1px solid var(--border-color);' : '' }}"
-                        onmouseover="this.style.background='var(--row-hover)'"
-                        onmouseout="this.style.background='none'"
+                        @class([
+                            'flex w-full cursor-pointer items-center gap-3 border-0 bg-transparent px-4 py-3 text-left hover:bg-app-row-hover',
+                            'border-b border-app-border' => ! $loop->last,
+                        ])
                     >
                         {{-- Left icon circle --}}
-                        <span style="width:36px;height:36px;border-radius:50%;background:{{ $iconBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $iconBgClass }}">
                             @if($isCredit)
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color:{{ $signColor }}">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="{{ $signClass }}">
                                     <path d="M8 12V4M8 4L5 7M8 4l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             @else
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color:{{ $signColor }}">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="{{ $signClass }}">
                                     <path d="M8 4v8M8 12l-3-3M8 12l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             @endif
                         </span>
 
                         {{-- Middle: description + time --}}
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-size:13px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        <div class="min-w-0 flex-1">
+                            <div class="truncate text-[13px] text-app-text">
                                 {{ $entry['description'] }}
                             </div>
-                            <div style="font-size:11px;color:var(--text-secondary);font-family:'DM Mono',monospace;margin-top:2px;">
+                            <div class="mt-0.5 font-mono text-[11px] text-app-muted">
                                 {{ $time }}
                             </div>
                         </div>
 
                         {{-- Right: amount + running balance --}}
-                        <div style="text-align:right;flex-shrink:0;">
-                            <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:{{ $signColor }};">
+                        <div class="shrink-0 text-right">
+                            <div class="font-mono text-[13px] font-bold {{ $signClass }}">
                                 {{ $sign }}{{ number_format($entry['amount'], 0, ',', ' ') }}
                             </div>
-                            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">
+                            <div class="mt-0.5 text-[11px] text-app-muted">
                                 → {{ number_format($entry['runningBalance'], 0, ',', ' ') }} KMF
                             </div>
                         </div>
@@ -110,47 +123,63 @@
 
     {{-- Entry detail slide-over --}}
     @if($selectedEntry)
-        <div wire:click="closeEntry" style="position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:200;"></div>
-        <div style="position:fixed;inset:0;background:var(--bg);z-index:201;display:flex;flex-direction:column;max-width:600px;margin:0 auto;">
+        <div wire:click="closeEntry" class="fixed inset-0 z-[200] bg-black/30"></div>
+
+        <div class="fixed inset-0 z-[201] mx-auto flex max-w-[600px] flex-col bg-app-bg">
             {{-- Header --}}
-            <div style="padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            <div class="flex shrink-0 items-center gap-3 border-b border-app-border bg-app-surface px-5 py-4">
                 <button wire:click="closeEntry" type="button"
-                    style="background:none;border:none;cursor:pointer;color:var(--text-secondary);display:flex;padding:4px;">
+                    class="flex cursor-pointer border-0 bg-transparent p-1 text-app-muted">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <path d="M12.5 5L7.5 10l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <h3 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary);">Détail écriture</h3>
+
+                <h3 class="m-0 text-[15px] font-bold text-app-text">
+                    Détail écriture
+                </h3>
             </div>
 
             {{-- Body --}}
-            <div style="flex:1;overflow-y:auto;padding:20px;">
+            <div class="flex-1 overflow-y-auto p-5">
                 @php
-                    $e        = $selectedEntry;
+                    $e = $selectedEntry;
                     $isCredit = $e['entryType'] === 'CREDIT';
-                    $heroColor = $isCredit ? 'var(--green)' : 'var(--red)';
-                    $sign      = $isCredit ? '+' : '−';
+                    $sign = $isCredit ? '+' : '−';
+                    $heroClass = $isCredit ? 'text-app-green' : 'text-app-red';
                 @endphp
 
                 {{-- Hero amount --}}
-                <div style="text-align:center;padding:20px 0 28px;border-bottom:1px solid var(--border-color);margin-bottom:8px;">
+                <div class="mb-2 border-b border-app-border px-0 pb-7 pt-5 text-center">
                     <x-agent-badge :status="$e['entryType']" />
-                    <div style="font-size:34px;font-weight:800;font-family:'DM Mono',monospace;letter-spacing:-0.03em;margin:14px 0 6px;color:{{ $heroColor }};">
+
+                    <div class="mb-1 mt-3.5 font-mono text-[34px] font-extrabold tracking-[-0.03em] {{ $heroClass }}">
                         {{ $sign }}{{ number_format($e['amount'], 0, ',', ' ') }}
-                        <span style="font-size:16px;font-weight:500;color:var(--text-secondary);">KMF</span>
+                        <span class="text-base font-medium text-app-muted">KMF</span>
                     </div>
                 </div>
 
                 {{-- Detail rows --}}
                 <x-detail-row label="N° séquence" :mono="true">{{ $e['globalSequence'] }}</x-detail-row>
                 <x-detail-row label="ID Transaction" :mono="true">{{ $e['transactionId'] }}</x-detail-row>
+
                 <x-detail-row label="Type d'écriture">
                     <x-agent-badge :status="$e['entryType']" />
                 </x-detail-row>
-                <x-detail-row label="Montant" :mono="true">{{ $sign }}{{ number_format($e['amount'], 0, ',', ' ') }} KMF</x-detail-row>
-                <x-detail-row label="Solde après" :mono="true">{{ number_format($e['runningBalance'], 0, ',', ' ') }} KMF</x-detail-row>
+
+                <x-detail-row label="Montant" :mono="true">
+                    {{ $sign }}{{ number_format($e['amount'], 0, ',', ' ') }} KMF
+                </x-detail-row>
+
+                <x-detail-row label="Solde après" :mono="true">
+                    {{ number_format($e['runningBalance'], 0, ',', ' ') }} KMF
+                </x-detail-row>
+
                 <x-detail-row label="Description">{{ $e['description'] }}</x-detail-row>
-                <x-detail-row label="Date comptable" :border="false">{{ \Carbon\Carbon::parse($e['postedAt'])->isoFormat('D MMM YYYY, HH:mm') }}</x-detail-row>
+
+                <x-detail-row label="Date comptable" :border="false">
+                    {{ \Carbon\Carbon::parse($e['postedAt'])->isoFormat('D MMM YYYY, HH:mm') }}
+                </x-detail-row>
             </div>
         </div>
     @endif

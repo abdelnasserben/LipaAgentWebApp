@@ -1,194 +1,320 @@
 <div>
     {{-- Tabs --}}
-    <div style="background:var(--surface);border-bottom:1px solid var(--border-color);padding:0 16px;display:flex;gap:0;">
-        @foreach([['key' => 'profile', 'label' => 'Profil'], ['key' => 'limits', 'label' => 'Limites'], ['key' => 'security', 'label' => 'Sécurité']] as $tab)
-            <button wire:click="switchTab('{{ $tab['key'] }}')" type="button"
-                style="padding:14px 18px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:{{ $activeTab === $tab['key'] ? 'var(--accent)' : 'var(--text-secondary)' }};border-bottom:2px solid {{ $activeTab === $tab['key'] ? 'var(--accent)' : 'transparent' }};transition:all 0.15s;white-space:nowrap;">
-                {{ $tab['label'] }}
-            </button>
-        @endforeach
+    <div class="border-b border-app-border bg-app-surface">
+        <div class="flex gap-0 overflow-x-auto px-4 md:mx-auto md:max-w-5xl md:px-6">
+            @foreach ([['key' => 'profile', 'label' => 'Profil'], ['key' => 'limits', 'label' => 'Limites'], ['key' => 'security', 'label' => 'Sécurité']] as $tab)
+                <button wire:click="switchTab('{{ $tab['key'] }}')" type="button" @class([
+                    'cursor-pointer whitespace-nowrap border-0 border-b-2 bg-transparent px-[18px] py-3.5 text-[13px] font-semibold transition-colors',
+                    'border-app-accent text-app-accent' => $activeTab === $tab['key'],
+                    'border-transparent text-app-muted' => $activeTab !== $tab['key'],
+                ])>
+                    {{ $tab['label'] }}
+                </button>
+            @endforeach
+        </div>
     </div>
 
-    <div style="padding:16px;max-width:640px;">
-
+    <div class="p-4 md:mx-auto md:max-w-5xl md:px-6 md:py-6">
         {{-- PROFILE TAB --}}
-        @if($activeTab === 'profile')
-            {{-- Avatar + name --}}
-            <div style="display:flex;align-items:center;gap:16px;padding:20px;background:var(--surface);border-radius:12px;border:1px solid var(--border-color);margin-bottom:16px;">
-                <div style="width:52px;height:52px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <span style="font-size:20px;font-weight:800;color:var(--accent);">{{ strtoupper(substr($profile['fullName'], 0, 1)) }}</span>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:17px;font-weight:700;color:var(--text-primary);letter-spacing:-0.02em;">{{ $profile['fullName'] }}</div>
-                    <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;font-family:'DM Mono',monospace;">{{ $profile['externalRef'] }}</div>
-                </div>
-                <x-agent-badge :status="$profile['status']" />
-            </div>
-
-            {{-- Contact details --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);margin-bottom:16px;overflow:hidden;">
-                <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);">
-                    <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);">Informations de contact</div>
-                </div>
-                <div style="padding:0 16px;">
-                    <x-detail-row label="Téléphone">
-                        <span style="font-family:'DM Mono',monospace;">+{{ $profile['phoneCountryCode'] }} {{ $profile['phoneNumber'] }}</span>
-                    </x-detail-row>
-                    <x-detail-row label="Zone">{{ $profile['zone'] }}</x-detail-row>
-                    <x-detail-row label="Niveau KYC">
-                        <x-agent-badge :status="$profile['kycLevel']" />
-                    </x-detail-row>
-                    <x-detail-row label="Contrat" :mono="true">{{ $profile['contractRef'] ?? '—' }}</x-detail-row>
-                    <x-detail-row label="Membre depuis" :border="false">{{ \Carbon\Carbon::parse($profile['createdAt'])->format('d M Y') }}</x-detail-row>
-                </div>
-            </div>
-
-            {{-- Permissions/capabilities --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);overflow:hidden;">
-                <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);">
-                    <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);">Capacités</div>
-                </div>
-                <div style="padding:16px;">
-                    @php
-                        $caps = [
-                            ['label' => 'Cash-in client', 'enabled' => $profile['canDoCashIn']],
-                            ['label' => 'Cash-out marchand', 'enabled' => $profile['canDoCashOut']],
-                            ['label' => 'Vente de cartes NFC', 'enabled' => $profile['canSellCards']],
-                        ];
-                    @endphp
-                    @foreach($caps as $cap)
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                            <span style="font-size:13px;color:var(--text-primary);">{{ $cap['label'] }}</span>
-                            @if($cap['enabled'])
-                                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--green);">
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                        <circle cx="7" cy="7" r="6" fill="var(--green-bg)" stroke="var(--green)" stroke-width="1.2"/>
-                                        <path d="M4 7l2 2 4-4" stroke="var(--green)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Activé
-                                </span>
-                            @else
-                                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--text-secondary);">
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                        <circle cx="7" cy="7" r="6" fill="var(--border-color)" stroke="var(--border-color)" stroke-width="1.2"/>
-                                        <path d="M5 5l4 4M9 5l-4 4" stroke="var(--text-secondary)" stroke-width="1.3" stroke-linecap="round"/>
-                                    </svg>
-                                    Désactivé
-                                </span>
-                            @endif
+        @if ($activeTab === 'profile')
+            <div class="grid gap-4 md:grid-cols-[1.1fr_0.9fr] md:items-start">
+                <div class="space-y-4">
+                    {{-- Avatar + name --}}
+                    <div class="flex items-center gap-4 rounded-xl border border-app-border bg-app-surface p-5">
+                        <div class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-app-accent-bg">
+                            <span class="text-xl font-extrabold text-app-accent">
+                                {{ strtoupper(substr($profile['fullName'], 0, 1)) }}
+                            </span>
                         </div>
-                    @endforeach
+
+                        <div class="min-w-0 flex-1">
+                            <div class="text-[17px] font-bold tracking-[-0.02em] text-app-text">
+                                {{ $profile['fullName'] }}
+                            </div>
+                            <div class="mt-0.5 font-mono text-xs text-app-muted">
+                                {{ $profile['externalRef'] }}
+                            </div>
+                        </div>
+
+                        <x-agent-badge :status="$profile['status']" />
+                    </div>
+
+                    {{-- Contact details --}}
+                    <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
+                        <div class="border-b border-app-border px-4 py-3">
+                            <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                                Informations de contact
+                            </div>
+                        </div>
+
+                        <div class="px-4">
+                            <x-detail-row label="Téléphone">
+                                <span class="font-mono">+{{ $profile['phoneCountryCode'] }} {{ $profile['phoneNumber'] }}</span>
+                            </x-detail-row>
+                            <x-detail-row label="Zone">{{ $profile['zone'] }}</x-detail-row>
+                            <x-detail-row label="Niveau KYC">
+                                <x-agent-badge :status="$profile['kycLevel']" />
+                            </x-detail-row>
+                            <x-detail-row label="Contrat" :mono="true">{{ $profile['contractRef'] ?? '—' }}</x-detail-row>
+                            <x-detail-row label="Membre depuis" :border="false">
+                                {{ \Carbon\Carbon::parse($profile['createdAt'])->format('d M Y') }}
+                            </x-detail-row>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Permissions/capabilities --}}
+                <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
+                    <div class="border-b border-app-border px-4 py-3">
+                        <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                            Capacités
+                        </div>
+                    </div>
+
+                    <div class="p-4">
+                        @php
+                            $caps = [
+                                ['label' => 'Cash-in client', 'enabled' => $profile['canDoCashIn']],
+                                ['label' => 'Cash-out marchand', 'enabled' => $profile['canDoCashOut']],
+                                ['label' => 'Vente de cartes NFC', 'enabled' => $profile['canSellCards']],
+                            ];
+                        @endphp
+
+                        @foreach ($caps as $cap)
+                            <div @class([
+                                'flex items-center justify-between py-2.5',
+                                'border-b border-app-border' => ! $loop->last,
+                            ])>
+                                <span class="text-[13px] text-app-text">{{ $cap['label'] }}</span>
+
+                                @if ($cap['enabled'])
+                                    <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-app-green">
+                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="text-app-green">
+                                            <circle cx="7" cy="7" r="6" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.2" />
+                                            <path d="M4 7l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        Activé
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-app-muted">
+                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="text-app-muted">
+                                            <circle cx="7" cy="7" r="6" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.2" />
+                                            <path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                                        </svg>
+                                        Désactivé
+                                    </span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 
         {{-- LIMITS TAB --}}
         @elseif($activeTab === 'limits')
-            {{-- Float info --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);padding:16px;margin-bottom:16px;">
-                <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:12px;">Float</div>
-                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-                    <span style="font-size:13px;color:var(--text-secondary);">Solde actuel</span>
-                    <span style="font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--text-primary);">{{ number_format($limits['float']['current'], 0, ',', ' ') }} KMF</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-bottom:10px;">
-                    <span>Min: {{ number_format($limits['float']['min'], 0, ',', ' ') }} KMF</span>
-                    <span>Max: {{ number_format($limits['float']['max'], 0, ',', ' ') }} KMF</span>
-                </div>
-                @php $floatPct = min(($limits['float']['current'] / $limits['float']['max']) * 100, 100); @endphp
-                <div style="height:6px;background:var(--border-color);border-radius:3px;overflow:hidden;">
-                    <div style="width:{{ $floatPct }}%;height:100%;background:var(--accent);border-radius:3px;"></div>
-                </div>
-            </div>
+            <div class="grid gap-4 md:grid-cols-2 md:items-start">
+                {{-- Float info --}}
+                <div class="rounded-xl border border-app-border bg-app-surface p-4 md:col-span-2">
+                    <div class="mb-3 text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                        Float
+                    </div>
 
-            {{-- Cash-in limits --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);overflow:hidden;margin-bottom:16px;">
-                <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);">
-                    <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);">Limites Cash-In</div>
-                </div>
-                <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
-                    @foreach([['label' => 'Journalier', 'data' => $limits['cashIn']['daily']], ['label' => 'Hebdomadaire', 'data' => $limits['cashIn']['weekly']], ['label' => 'Mensuel', 'data' => $limits['cashIn']['monthly']]] as $period)
-                        <div>
-                            <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">{{ $period['label'] }}</div>
-                            <x-limit-bar :used="$period['data']['used']" :limit="$period['data']['limit']" />
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+                    <div class="mb-1 flex items-baseline justify-between">
+                        <span class="text-[13px] text-app-muted">Solde actuel</span>
+                        <span class="font-mono text-[15px] font-bold text-app-text">
+                            {{ number_format($limits['float']['current'], 0, ',', ' ') }} KMF
+                        </span>
+                    </div>
 
-            {{-- Cash-out limits --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);overflow:hidden;">
-                <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);">
-                    <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);">Limites Cash-Out</div>
+                    <div class="mb-2.5 flex justify-between text-[11px] text-app-muted">
+                        <span>Min: {{ number_format($limits['float']['min'], 0, ',', ' ') }} KMF</span>
+                        <span>Max: {{ number_format($limits['float']['max'], 0, ',', ' ') }} KMF</span>
+                    </div>
+
+                    @php $floatPct = min(($limits['float']['current'] / $limits['float']['max']) * 100, 100); @endphp
+
+                    <div class="h-1.5 overflow-hidden rounded-full bg-app-border">
+                        <div class="h-full rounded-full bg-app-accent" style="width: {{ $floatPct }}%;"></div>
+                    </div>
                 </div>
-                <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
-                    @foreach([['label' => 'Journalier', 'data' => $limits['cashOut']['daily']], ['label' => 'Hebdomadaire', 'data' => $limits['cashOut']['weekly']], ['label' => 'Mensuel', 'data' => $limits['cashOut']['monthly']]] as $period)
-                        <div>
-                            <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">{{ $period['label'] }}</div>
-                            <x-limit-bar :used="$period['data']['used']" :limit="$period['data']['limit']" />
+
+                {{-- Cash-in limits --}}
+                <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
+                    <div class="border-b border-app-border px-4 py-3">
+                        <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                            Limites Cash-In
                         </div>
-                    @endforeach
+                    </div>
+
+                    <div class="flex flex-col gap-4 p-4">
+                        @foreach ([['label' => 'Journalier', 'data' => $limits['cashIn']['daily']], ['label' => 'Hebdomadaire', 'data' => $limits['cashIn']['weekly']], ['label' => 'Mensuel', 'data' => $limits['cashIn']['monthly']]] as $period)
+                            <div>
+                                <div class="mb-1.5 text-xs font-semibold text-app-text">
+                                    {{ $period['label'] }}
+                                </div>
+                                <x-limit-bar :used="$period['data']['used']" :limit="$period['data']['limit']" />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Cash-out limits --}}
+                <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
+                    <div class="border-b border-app-border px-4 py-3">
+                        <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                            Limites Cash-Out
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-4 p-4">
+                        @foreach ([['label' => 'Journalier', 'data' => $limits['cashOut']['daily']], ['label' => 'Hebdomadaire', 'data' => $limits['cashOut']['weekly']], ['label' => 'Mensuel', 'data' => $limits['cashOut']['monthly']]] as $period)
+                            <div>
+                                <div class="mb-1.5 text-xs font-semibold text-app-text">
+                                    {{ $period['label'] }}
+                                </div>
+                                <x-limit-bar :used="$period['data']['used']" :limit="$period['data']['limit']" />
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 
         {{-- SECURITY TAB --}}
         @else
-            {{-- Session info --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);overflow:hidden;margin-bottom:16px;">
-                <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);">
-                    <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);">Session active</div>
-                </div>
-                <div style="padding:0 16px;">
-                    <x-detail-row label="Type d'authentification">OTP / TOTP</x-detail-row>
-                    <x-detail-row label="Durée session">8 heures</x-detail-row>
-                    <x-detail-row label="Expiration token">{{ now()->addHours(8)->format('H:i') }}</x-detail-row>
-                    <x-detail-row label="User-Agent" :border="false">
-                        <span style="font-family:'DM Mono',monospace;font-size:11px;">{{ \Illuminate\Support\Str::limit(request()->userAgent() ?? 'Unknown', 40) }}</span>
-                    </x-detail-row>
-                </div>
-            </div>
+            <div class="grid gap-4 lg:grid-cols-[1fr_1fr] lg:items-start">
+                <div class="space-y-4">
+                    {{-- Session info --}}
+                    <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
+                        <div class="border-b border-app-border px-4 py-3">
+                            <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                                Session active
+                            </div>
+                        </div>
 
-            {{-- TOTP setup --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);overflow:hidden;margin-bottom:16px;">
-                <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
-                    <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);">Authentification 2FA (TOTP)</div>
-                </div>
-                <div style="padding:16px;">
-                    <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px;">
-                        Activez l'authentification TOTP pour remplacer les SMS OTP par une app d'authentification (Google Authenticator, etc.).
-                    </p>
-                    <button wire:click="toggleTotpSetup" type="button"
-                        style="padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">
-                        Configurer le TOTP
-                    </button>
-                </div>
-            </div>
+                        <div class="px-4">
+                            <x-detail-row label="Type d'authentification">OTP / TOTP</x-detail-row>
+                            <x-detail-row label="Durée session">8 heures</x-detail-row>
+                            <x-detail-row label="Expiration token">{{ now()->addHours(8)->format('H:i') }}</x-detail-row>
+                            <x-detail-row label="User-Agent" :border="false">
+                                <span class="font-mono text-[11px]">
+                                    {{ \Illuminate\Support\Str::limit(request()->userAgent() ?? 'Unknown', 40) }}
+                                </span>
+                            </x-detail-row>
+                        </div>
+                    </div>
 
-            @if($totpSetupOpen)
-                <div style="background:var(--blue-bg);border:1px solid var(--blue);border-radius:10px;padding:16px;margin-bottom:16px;">
-                    <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:8px;">Configuration TOTP</div>
-                    <p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px;">
-                        En mode production, un QR code sera généré ici. Scannez-le avec votre app d'authentification.
-                    </p>
-                    <div style="font-family:'DM Mono',monospace;font-size:13px;background:var(--surface);border:1px solid var(--border-color);padding:10px 14px;border-radius:6px;letter-spacing:0.1em;text-align:center;">
-                        SECRET-DEMO-TOTP-KEY-123
+                    {{-- Sign out --}}
+                    <div class="overflow-hidden rounded-xl border border-app-red bg-app-surface">
+                        <div class="p-4">
+                            <div class="mb-1.5 text-[13px] font-semibold text-app-text">Se déconnecter</div>
+
+                            <p class="mb-3 mt-0 text-xs text-app-muted">
+                                Vous serez redirigé vers la page de connexion.
+                            </p>
+
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit"
+                                    class="cursor-pointer rounded-lg border border-app-red bg-app-red-bg px-[18px] py-2.5 text-[13px] font-semibold text-app-red">
+                                    Se déconnecter
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            @endif
 
-            {{-- Sign out --}}
-            <div style="background:var(--surface);border-radius:12px;border:1px solid var(--red);overflow:hidden;">
-                <div style="padding:16px;">
-                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Se déconnecter</div>
-                    <p style="font-size:12px;color:var(--text-secondary);margin:0 0 12px;">
-                        Vous serez redirigé vers la page de connexion.
-                    </p>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit"
-                            style="padding:10px 18px;background:var(--red-bg);color:var(--red);border:1px solid var(--red);border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">
-                            Se déconnecter
-                        </button>
-                    </form>
+                <div class="space-y-4">
+                    {{-- TOTP setup --}}
+                    <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
+                        <div class="flex items-center justify-between border-b border-app-border px-4 py-3">
+                            <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                                Authentification 2FA (TOTP)
+                            </div>
+                        </div>
+
+                        <div class="p-4">
+                            <p class="mb-3 mt-0 text-[13px] text-app-muted">
+                                Activez l'authentification TOTP pour remplacer les SMS OTP par une app d'authentification
+                                (Google Authenticator, etc.).
+                            </p>
+
+                            <button wire:click="toggleTotpSetup" type="button"
+                                class="cursor-pointer rounded-lg border-0 bg-app-accent px-[18px] py-2.5 text-[13px] font-semibold text-white">
+                                Configurer le TOTP
+                            </button>
+                        </div>
+                    </div>
+
+                    @if ($totpSetupOpen)
+                        <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
+                            <div class="border-b border-app-border px-4 py-3">
+                                <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                                    Configuration TOTP
+                                </div>
+                            </div>
+
+                            <div class="p-4">
+                                <p class="mb-5 mt-0 text-[13px] leading-relaxed text-app-muted">
+                                    Scannez ce QR code avec votre application d'authentification puis saisissez le code généré
+                                    pour activer la protection 2FA.
+                                </p>
+
+                                {{-- QR Card --}}
+                                <div class="mb-5 flex justify-center">
+                                    <div class="rounded-2xl border border-app-border bg-app-bg p-4">
+                                        <div class="rounded-xl bg-white p-4 shadow-sm">
+                                            @if (!empty($totpQrCodeSvg))
+                                                {!! $totpQrCodeSvg !!}
+                                            @elseif(!empty($totpQrCodeUrl))
+                                                <img src="{{ $totpQrCodeUrl }}" alt="QR code TOTP" class="h-44 w-44" />
+                                            @else
+                                                <div class="grid h-44 w-44 grid-cols-7 gap-1 bg-white p-2">
+                                                    @foreach (range(1, 49) as $i)
+                                                        <div @class([
+                                                            'rounded-[2px]',
+                                                            'bg-black' => in_array($i, [1,2,3,5,7,8,10,12,14,15,16,18,20,22,24,25,27,29,31,33,35,36,38,40,42,43,45,47,49]),
+                                                            'bg-white' => ! in_array($i, [1,2,3,5,7,8,10,12,14,15,16,18,20,22,24,25,27,29,31,33,35,36,38,40,42,43,45,47,49]),
+                                                        ])></div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (!empty($totpSecret))
+                                    <div class="mb-5">
+                                        <div class="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                            Clé manuelle
+                                        </div>
+
+                                        <div class="rounded-lg border border-app-border bg-app-bg px-3.5 py-3 text-center font-mono text-[13px] tracking-[0.08em] text-app-text">
+                                            {{ $totpSecret }}
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="mb-5">
+                                    <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                        Code de vérification
+                                    </label>
+
+                                    <input type="text" wire:model="totpCode" inputmode="numeric" maxlength="6"
+                                        placeholder="******"
+                                        class="box-border w-full rounded-xl border-[1.5px] border-app-border bg-app-bg px-4 py-3 text-center font-mono text-xl tracking-[0.25em] text-app-text outline-none focus:border-app-accent" />
+
+                                    @error('totpCode')
+                                        <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <button wire:click="confirmTotpSetup" type="button"
+                                    class="w-full cursor-pointer rounded-xl border-0 bg-app-accent px-5 py-3 text-[14px] font-bold text-white transition-opacity hover:opacity-95">
+                                    Activer le TOTP
+                                </button>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         @endif

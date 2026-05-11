@@ -1,17 +1,17 @@
 <div>
     {{-- Balance hero (dark header) --}}
-    <div style="margin:16px 16px 0;background:var(--sidebar-bg);border-radius:12px;padding:24px 20px 28px;position:relative;overflow:hidden;">
+    <div class="relative mx-4 mt-4 overflow-hidden rounded-xl bg-app-sidebar px-5 pb-7 pt-6">
         {{-- Grid texture --}}
-        <div style="position:absolute;inset:0;opacity:0.04;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;"></div>
+        <div class="pointer-events-none absolute inset-0 opacity-[0.04] bg-[linear-gradient(rgba(255,255,255,.5)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.5)_1px,transparent_1px)] bg-[length:24px_24px]"></div>
 
-        <div style="position:relative;">
+        <div class="relative">
             {{-- Greeting row --}}
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div class="mb-5 flex items-center justify-between">
                 <div>
-                    <div style="font-size:12px;color:rgba(255,255,255,0.45);font-weight:500;margin-bottom:2px;">
+                    <div class="mb-0.5 text-xs font-medium text-white/45">
                         {{ now()->isoFormat('dddd D MMMM') }}
                     </div>
-                    <div style="font-size:16px;font-weight:700;color:#fff;">
+                    <div class="text-base font-bold text-white">
                         Bonjour, {{ Str::before($profile['fullName'], ' ') }} 👋
                     </div>
                 </div>
@@ -19,11 +19,11 @@
             </div>
 
             {{-- Balance --}}
-            <div style="margin-bottom:20px;">
-                <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+            <div class="mb-5">
+                <div class="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.1em] text-white/40">
                     <span>Float Balance</span>
                     <button wire:click="toggleBalance" type="button"
-                        style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.4);display:flex;padding:0;">
+                        class="flex cursor-pointer border-0 bg-transparent p-0 text-white/40">
                         @if($balanceVisible)
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3"/>
@@ -40,18 +40,18 @@
                 </div>
 
                 @if($balanceVisible)
-                    <div style="display:flex;align-items:baseline;gap:8px;">
-                        <span style="font-size:36px;font-weight:800;color:#fff;font-family:'DM Mono',monospace;letter-spacing:-0.03em;line-height:1;">
+                    <div class="flex items-baseline gap-2">
+                        <span class="font-mono text-4xl font-extrabold leading-none tracking-[-0.03em] text-white">
                             {{ number_format($balance['availableBalance'], 0, ',', ' ') }}
                         </span>
-                        <span style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.5);">KMF</span>
+                        <span class="text-sm font-medium text-white/50">KMF</span>
                     </div>
                 @else
-                    <div style="font-size:28px;font-weight:800;color:rgba(255,255,255,0.3);letter-spacing:0.15em;">••••••</div>
+                    <div class="text-[28px] font-extrabold tracking-[0.15em] text-white/30">••••••</div>
                 @endif
 
                 @if($balance['frozenBalance'] > 0)
-                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">
+                    <div class="mt-1 text-[11px] text-white/40">
                         + {{ number_format($balance['frozenBalance'], 0, ',', ' ') }} KMF gelé
                     </div>
                 @endif
@@ -59,19 +59,19 @@
 
             {{-- Float low warning --}}
             @if($summary['belowFloatAlert'])
-                <div style="background:rgba(234,179,8,0.15);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:8px 12px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                <div class="mb-4 flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/15 px-3 py-2">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M7 1L1.5 12h11L7 1z" stroke="rgba(234,179,8,0.9)" stroke-width="1.3" stroke-linejoin="round"/>
-                        <path d="M7 5.5v3M7 9.5v.5" stroke="rgba(234,179,8,0.9)" stroke-width="1.3" stroke-linecap="round"/>
+                        <path d="M7 1L1.5 12h11L7 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                        <path d="M7 5.5v3M7 9.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
                     </svg>
-                    <span style="font-size:12px;color:rgba(234,179,8,0.9);">
+                    <span class="text-xs text-yellow-500">
                         Float en dessous du seuil d'alerte ({{ number_format($profile['floatAlertThreshold'], 0, ',', ' ') }} KMF)
                     </span>
                 </div>
             @endif
 
             {{-- Today stats strip --}}
-            <div style="display:flex;gap:0;border-top:1px solid rgba(255,255,255,0.08);padding-top:16px;">
+            <div class="flex gap-0 border-t border-white/[0.08] pt-4">
                 @php
                     $stats = [
                         ['label' => 'Cash In', 'value' => number_format($summary['totalCompletedAmountToday'] * 0.6, 0, ',', ' ') . ' KMF'],
@@ -80,10 +80,18 @@
                         ['label' => 'Commission', 'value' => number_format($summary['commissionEarnedToday'], 0, ',', ' ') . ' KMF'],
                     ];
                 @endphp
+
                 @foreach($stats as $i => $stat)
-                    <div style="flex:1;{{ $i > 0 ? 'border-left:1px solid rgba(255,255,255,0.08);padding-left:12px;' : '' }}padding-right:12px;">
-                        <div style="font-size:10px;color:rgba(255,255,255,0.38);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;">{{ $stat['label'] }}</div>
-                        <div style="font-size:13px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;letter-spacing:-0.01em;">{{ $stat['value'] }}</div>
+                    <div @class([
+                        'flex-1 pr-3',
+                        'border-l border-white/[0.08] pl-3' => $i > 0,
+                    ])>
+                        <div class="mb-1 text-[10px] font-medium uppercase tracking-[0.06em] text-white/[0.38]">
+                            {{ $stat['label'] }}
+                        </div>
+                        <div class="font-mono text-[13px] font-bold tracking-[-0.01em] text-white">
+                            {{ $stat['value'] }}
+                        </div>
                     </div>
                 @endforeach
             </div>
@@ -91,59 +99,90 @@
     </div>
 
     {{-- Quick actions --}}
-    <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="grid grid-cols-2 gap-2 p-4">
         @php
             $actions = [
-                ['label' => 'Cash-in Client', 'icon' => 'cash-in', 'color' => 'var(--green)', 'bg' => 'var(--green-bg)', 'href' => route('operations', ['tab' => 'cash-in'])],
-                ['label' => 'Cash-out Marchand', 'icon' => 'cash-out', 'color' => 'var(--amber)', 'bg' => 'var(--amber-bg)', 'href' => route('operations', ['tab' => 'cash-out'])],
-                ['label' => 'Enrôler Client', 'icon' => 'enroll', 'color' => 'var(--blue)', 'bg' => 'var(--blue-bg)', 'href' => route('enroll')],
-                ['label' => 'Transactions', 'icon' => 'transactions', 'color' => 'var(--purple)', 'bg' => 'var(--purple-bg)', 'href' => route('transactions')],
+                [
+                    'label' => 'Cash-in Client',
+                    'icon' => 'cash-in',
+                    'iconClass' => 'text-app-green',
+                    'iconBgClass' => 'bg-app-green-bg',
+                    'href' => route('operations', ['tab' => 'cash-in']),
+                ],
+                [
+                    'label' => 'Cash-out Marchand',
+                    'icon' => 'cash-out',
+                    'iconClass' => 'text-app-amber',
+                    'iconBgClass' => 'bg-app-amber-bg',
+                    'href' => route('operations', ['tab' => 'cash-out']),
+                ],
+                [
+                    'label' => 'Enrôler Client',
+                    'icon' => 'enroll',
+                    'iconClass' => 'text-app-blue',
+                    'iconBgClass' => 'bg-app-blue-bg',
+                    'href' => route('enroll'),
+                ],
+                [
+                    'label' => 'Transactions',
+                    'icon' => 'transactions',
+                    'iconClass' => 'text-app-purple',
+                    'iconBgClass' => 'bg-app-purple-bg',
+                    'href' => route('transactions'),
+                ],
             ];
         @endphp
+
         @foreach($actions as $action)
             <a href="{{ $action['href'] }}" wire:navigate
-               style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:14px;background:var(--surface);border:1px solid var(--border-color);border-radius:10px;text-decoration:none;color:var(--text-primary);">
-                <span style="width:34px;height:34px;border-radius:9px;background:{{ $action['bg'] }};display:flex;align-items:center;justify-content:center;">
-                    <x-agent-icon :name="$action['icon']" :size="18" style="color:{{ $action['color'] }}" />
+                class="flex flex-col items-start gap-2 rounded-[10px] border border-app-border bg-app-surface p-3.5 text-app-text no-underline">
+                <span class="flex h-[34px] w-[34px] items-center justify-center rounded-[9px] {{ $action['iconBgClass'] }}">
+                    <x-agent-icon :name="$action['icon']" :size="18" class="{{ $action['iconClass'] }}" />
                 </span>
-                <span style="font-size:13px;font-weight:600;">{{ $action['label'] }}</span>
+                <span class="text-[13px] font-semibold">{{ $action['label'] }}</span>
             </a>
         @endforeach
     </div>
 
     {{-- Recent transactions --}}
-    <div style="padding:0 16px 16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);">Transactions récentes</div>
-            <a href="{{ route('transactions') }}" wire:navigate style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;">Voir tout</a>
+    <div class="px-4 pb-4">
+        <div class="mb-3 flex items-center justify-between">
+            <div class="text-xs font-bold uppercase tracking-[0.08em] text-app-muted">
+                Transactions récentes
+            </div>
+            <a href="{{ route('transactions') }}" wire:navigate
+                class="text-xs font-semibold text-app-accent no-underline">
+                Voir tout
+            </a>
         </div>
 
-        <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);overflow:hidden;">
+        <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
             @forelse($recentTransactions as $txn)
                 @php
                     $isCashIn = $txn['type'] === 'CASH_IN';
-                    $typeColor = $isCashIn ? 'var(--green)' : 'var(--amber)';
-                    $typeBg = $isCashIn ? 'var(--green-bg)' : 'var(--amber-bg)';
-                    $typeLabel = $isCashIn ? 'Cash In' : 'Cash Out';
+                    $typeIconClass = $isCashIn ? 'text-app-green' : 'text-app-amber';
+                    $typeBgClass = $isCashIn ? 'bg-app-green-bg' : 'bg-app-amber-bg';
                     $sign = $isCashIn ? '+' : '−';
-                    $amountColor = $isCashIn ? 'var(--green)' : 'var(--amber)';
+                    $amountClass = $isCashIn ? 'text-app-green' : 'text-app-amber';
                 @endphp
+
                 <button wire:click="selectTransaction('{{ $txn['id'] }}')" type="button"
-                    style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:left;border-bottom:1px solid var(--border-color);"
-                    onmouseover="this.style.background='var(--row-hover)'" onmouseout="this.style.background='none'">
-                    <span style="width:34px;height:34px;border-radius:9px;background:{{ $typeBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <x-agent-icon :name="$isCashIn ? 'cash-in' : 'cash-out'" :size="16" style="color:{{ $typeColor }}" />
+                    class="flex w-full cursor-pointer items-center gap-3 border-0 border-b border-app-border bg-transparent px-4 py-3 text-left hover:bg-app-row-hover">
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] {{ $typeBgClass }}">
+                        <x-agent-icon :name="$isCashIn ? 'cash-in' : 'cash-out'" :size="16" class="{{ $typeIconClass }}" />
                     </span>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+
+                    <div class="min-w-0 flex-1">
+                        <div class="truncate text-[13px] font-semibold text-app-text">
                             {{ $txn['description'] ?? ($isCashIn ? 'Cash-in client' : 'Cash-out marchand') }}
                         </div>
-                        <div style="font-size:11px;color:var(--text-secondary);margin-top:1px;font-family:'DM Mono',monospace;">
+                        <div class="mt-px font-mono text-[11px] text-app-muted">
                             {{ \Carbon\Carbon::parse($txn['createdAt'])->format('d M, H:i') }}
                         </div>
                     </div>
-                    <div style="text-align:right;flex-shrink:0;">
-                        <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:{{ $amountColor }};">
+
+                    <div class="shrink-0 text-right">
+                        <div class="font-mono text-[13px] font-semibold {{ $amountClass }}">
                             {{ $sign }}{{ number_format($txn['requestedAmount'], 0, ',', ' ') }}
                         </div>
                         <x-agent-badge :status="$txn['status']" />
@@ -156,10 +195,13 @@
     </div>
 
     {{-- Agent info card --}}
-    <div style="padding:0 16px 24px;">
-        <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border-color);padding:14px 16px;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:10px;">Informations agent</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="px-4 pb-6">
+        <div class="rounded-xl border border-app-border bg-app-surface px-4 py-3.5">
+            <div class="mb-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                Informations agent
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
                 @php
                     $infos = [
                         ['label' => 'Réf.', 'value' => $profile['externalRef'], 'mono' => true],
@@ -168,10 +210,18 @@
                         ['label' => 'Contrat', 'value' => $profile['contractRef'] ?? '—', 'mono' => true],
                     ];
                 @endphp
+
                 @foreach($infos as $info)
                     <div>
-                        <div style="font-size:10px;color:var(--text-secondary);margin-bottom:2px;">{{ $info['label'] }}</div>
-                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);{{ ($info['mono'] ?? false) ? "font-family:'DM Mono',monospace;" : '' }}">{{ $info['value'] }}</div>
+                        <div class="mb-0.5 text-[10px] text-app-muted">
+                            {{ $info['label'] }}
+                        </div>
+                        <div @class([
+                            'text-xs font-semibold text-app-text',
+                            'font-mono' => $info['mono'] ?? false,
+                        ])>
+                            {{ $info['value'] }}
+                        </div>
                     </div>
                 @endforeach
             </div>
@@ -180,24 +230,33 @@
 
     {{-- Transaction detail slide-over --}}
     @if($selectedTransaction)
-        <div wire:click="closeTransaction" style="position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:200;"></div>
-        <div style="position:fixed;inset:0;background:var(--bg);z-index:201;display:flex;flex-direction:column;max-width:600px;margin:0 auto;">
-            <div style="padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:12px;flex-shrink:0;">
-                <button wire:click="closeTransaction" type="button" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);display:flex;padding:4px;">
+        <div wire:click="closeTransaction" class="fixed inset-0 z-[200] bg-black/30"></div>
+
+        <div class="fixed inset-0 z-[201] mx-auto flex max-w-[600px] flex-col bg-app-bg">
+            <div class="flex shrink-0 items-center gap-3 border-b border-app-border bg-app-surface px-5 py-4">
+                <button wire:click="closeTransaction" type="button"
+                    class="flex cursor-pointer border-0 bg-transparent p-1 text-app-muted">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <path d="M12.5 5L7.5 10l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <h3 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary);">Détail transaction</h3>
+
+                <h3 class="m-0 text-[15px] font-bold text-app-text">
+                    Détail transaction
+                </h3>
             </div>
-            <div style="flex:1;overflow-y:auto;padding:20px;">
+
+            <div class="flex-1 overflow-y-auto p-5">
                 @php $txn = $selectedTransaction; @endphp
-                <div style="text-align:center;padding:20px 0 28px;">
+
+                <div class="px-0 pb-7 pt-5 text-center">
                     <x-agent-badge :status="$txn['type']" />
-                    <div style="font-size:32px;font-weight:800;color:var(--text-primary);font-family:'DM Mono',monospace;letter-spacing:-0.02em;margin:12px 0 4px;">
+
+                    <div class="my-3 mb-1 font-mono text-[32px] font-extrabold tracking-[-0.02em] text-app-text">
                         {{ number_format($txn['netAmountToDestination'], 0, ',', ' ') }}
-                        <span style="font-size:16px;font-weight:500;color:var(--text-secondary);">KMF</span>
+                        <span class="text-base font-medium text-app-muted">KMF</span>
                     </div>
+
                     <x-agent-badge :status="$txn['status']" />
                 </div>
 
@@ -207,6 +266,7 @@
                 <x-detail-row label="Commission" :mono="true">{{ number_format($txn['commissionAmount'], 0, ',', ' ') }} KMF</x-detail-row>
                 <x-detail-row label="Net destination" :mono="true">{{ number_format($txn['netAmountToDestination'], 0, ',', ' ') }} KMF</x-detail-row>
                 <x-detail-row label="Date">{{ \Carbon\Carbon::parse($txn['createdAt'])->format('d M Y, H:i') }}</x-detail-row>
+
                 @if($txn['description'] ?? null)
                     <x-detail-row label="Description" :border="false">{{ $txn['description'] }}</x-detail-row>
                 @endif
