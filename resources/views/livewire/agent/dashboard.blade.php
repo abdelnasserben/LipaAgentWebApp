@@ -1,4 +1,6 @@
 <div>
+    <x-api-error-alert :message="$apiError" class="mx-4 mt-4" />
+
     {{-- Balance hero (dark header) --}}
     <div class="relative mx-4 mt-4 overflow-hidden rounded-xl bg-app-sidebar px-5 pb-7 pt-6">
         {{-- Grid texture --}}

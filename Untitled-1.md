@@ -9,7 +9,7 @@ Wallet ID
 563046aa-ada5-4c2a-afb7-1de065bd8a07
 
 TODO:
-Display correctly erros and exception
-Make login pass with real API
+Display correctly erros and exception *
+Make login pass with real  *
 Complete other feature of agent in UI
 In mobile commission, statements misses should display all features

@@ -1,4 +1,6 @@
 <div>
+    <x-api-error-alert :message="$apiError" class="mx-4 mt-4" />
+
     {{-- Filter bar --}}
     <div class="sticky top-0 z-10 border-b border-app-border bg-app-bg px-4 pt-3">
         {{-- Search input --}}

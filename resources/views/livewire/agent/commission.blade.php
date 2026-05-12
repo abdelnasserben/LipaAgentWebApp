@@ -1,4 +1,6 @@
 <div>
+    <x-api-error-alert :message="$apiError" class="mx-4 mt-4" />
+
     {{-- Hero pending payout card --}}
     <div class="mx-4 mt-4">
         <div class="relative mb-4 overflow-hidden rounded-xl bg-app-sidebar px-5 py-6">

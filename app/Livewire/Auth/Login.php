@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Auth;
 
 use App\Contracts\Api\AgentAuthApi;
-use App\Exceptions\AgentAuthException;
+use App\Exceptions\ApiException;
+use App\Livewire\Concerns\HandlesApiErrors;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -15,6 +16,8 @@ use Livewire\Component;
 #[Title('Connexion Agent')]
 class Login extends Component
 {
+    use HandlesApiErrors;
+
     public string $step = 'credentials'; // credentials | mfa
 
     public string $phoneCountryCode = '269';
@@ -28,6 +31,14 @@ class Login extends Component
     public string $totpCode = '';
 
     public ?string $error = null;
+
+    public function mount(): void
+    {
+        $flashError = session('api_error');
+        if (is_string($flashError) && $flashError !== '') {
+            $this->error = $flashError;
+        }
+    }
 
     public function login(AgentAuthApi $auth): void
     {
@@ -43,8 +54,8 @@ class Login extends Component
 
         try {
             $result = $auth->login($this->phoneCountryCode, $this->phoneNumber, $this->pin);
-        } catch (AgentAuthException $exception) {
-            $this->error = $this->messageForApiError($exception->apiCode());
+        } catch (ApiException $exception) {
+            $this->showApiError($exception, 'error');
 
             return;
         }
@@ -68,8 +79,8 @@ class Login extends Component
 
         try {
             $result = $auth->verifyMfa($this->challengeId, $this->totpCode);
-        } catch (AgentAuthException $exception) {
-            $this->error = $this->messageForApiError($exception->apiCode());
+        } catch (ApiException $exception) {
+            $this->showApiError($exception, 'error');
             $this->totpCode = '';
 
             return;
@@ -170,25 +181,6 @@ class Login extends Component
             'totpCode.required' => 'Code TOTP requis.',
             'totpCode.regex' => 'Le code TOTP doit contenir 6 chiffres.',
         ];
-    }
-
-    private function messageForApiError(string $apiCode): string
-    {
-        return match ($apiCode) {
-            'INVALID_CREDENTIALS' => 'Identifiants invalides. Verifiez le telephone et le PIN.',
-            'AUTH_PIN_NOT_SET' => "Aucun PIN Agent n'est configure pour ce compte.",
-            'AUTH_PIN_LOCKED' => 'PIN Agent verrouille apres trop de tentatives. Reessayez dans 15 minutes.',
-            'MFA_REQUIRED' => 'Code TOTP requis pour terminer la connexion.',
-            'MFA_INVALID' => 'Code TOTP invalide ou expire.',
-            'LEGACY_OTP_LOGIN_REMOVED' => "L'ancien login SMS OTP n'est plus disponible. Utilisez telephone et PIN.",
-            'AUTH_ENDPOINT_NOT_FOUND' => "Endpoint de login Agent introuvable sur l'API configuree.",
-            'VALIDATION_FIELD_REQUIRED' => 'Tous les champs obligatoires doivent etre renseignes.',
-            'ACTOR_PENDING_KYC' => 'Compte Agent en attente de validation KYC.',
-            'ACTOR_SUSPENDED' => 'Compte Agent suspendu. Contactez le support Lipa.',
-            'ACTOR_CLOSED' => 'Compte Agent ferme. Contactez le support Lipa.',
-            'TERMINAL_RATE_LIMIT' => 'Trop de tentatives. Reessayez dans quelques instants.',
-            default => 'Connexion impossible pour le moment.',
-        };
     }
 
     public function render(): View

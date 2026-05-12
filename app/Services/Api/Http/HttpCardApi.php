@@ -14,7 +14,8 @@ final class HttpCardApi implements CardApi
 
     public function getCardStock(): array
     {
-        // TODO: GET /v1/agents/me/cards/stock
-        return $this->client->get('/v1/agents/me/cards/stock')->throw()->json();
+        $result = $this->client->paged($this->client->get('/api/v1/agent/card-stock'), 'FORBIDDEN');
+
+        return $result['data'];
     }
 }

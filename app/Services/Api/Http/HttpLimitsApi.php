@@ -14,7 +14,6 @@ final class HttpLimitsApi implements LimitsApi
 
     public function getLimits(): array
     {
-        // TODO: GET /v1/agents/me/limits
-        return $this->client->get('/v1/agents/me/limits')->throw()->json();
+        return $this->client->data($this->client->get('/api/v1/agent/limits'), 'CONFIG_LIMIT_PROFILE_NOT_FOUND');
     }
 }

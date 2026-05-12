@@ -98,6 +98,12 @@
 
         {{-- Page content --}}
         <div class="app-content" style="flex:1;overflow-y:auto;background:var(--bg);">
+            @if (session('api_error'))
+                <div class="px-4 pt-4">
+                    <x-api-error-alert :message="session('api_error')" />
+                </div>
+            @endif
+
             {{ $slot }}
         </div>
 

@@ -59,7 +59,7 @@
 
             <div class="mb-6">
                 <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
-                    PIN
+                    PIN Agent
                 </label>
 
                 <input

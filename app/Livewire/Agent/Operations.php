@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Agent;
 
 use App\Contracts\Api\OperationsApi;
+use App\Exceptions\ApiException;
+use App\Livewire\Concerns\HandlesApiErrors;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -14,7 +16,11 @@ use Livewire\Component;
 #[Title('Opérations')]
 class Operations extends Component
 {
+    use HandlesApiErrors;
+
     public string $activeTab = 'cash-in';
+
+    public ?string $apiError = null;
 
     // Cash-in state
     public string $ciStep = 'lookup';
@@ -58,7 +64,14 @@ class Operations extends Component
         ]);
 
         $this->ciError = null;
-        $customer = $operations->lookupCustomer($this->ciPhoneCountryCode, $this->ciPhoneNumber);
+
+        try {
+            $customer = $operations->lookupCustomer($this->ciPhoneCountryCode, $this->ciPhoneNumber);
+        } catch (ApiException $exception) {
+            $this->showApiError($exception, 'ciError');
+
+            return;
+        }
 
         if (! $customer) {
             $this->ciError = 'Client introuvable pour ce numéro.';
@@ -102,10 +115,17 @@ class Operations extends Component
         ]);
 
         $this->ciError = null;
-        $result = $operations->processCashIn([
-            'customerId' => $this->ciCustomer['customerId'],
-            'amount'     => (int) $this->ciAmount,
-        ]);
+
+        try {
+            $result = $operations->processCashIn([
+                'customerId' => $this->ciCustomer['customerId'],
+                'amount'     => (int) $this->ciAmount,
+            ]);
+        } catch (ApiException $exception) {
+            $this->showApiError($exception, 'ciError');
+
+            return;
+        }
 
         $this->ciResult = $result;
         $this->ciStep = 'success';
@@ -157,10 +177,16 @@ class Operations extends Component
     {
         $this->coError = null;
 
-        $result = $operations->processCashOut([
-            'merchantId' => $this->coMerchant['merchantId'],
-            'amount'     => (int) $this->coAmount,
-        ]);
+        try {
+            $result = $operations->processCashOut([
+                'merchantId' => $this->coMerchant['merchantId'],
+                'amount'     => (int) $this->coAmount,
+            ]);
+        } catch (ApiException $exception) {
+            $this->showApiError($exception, 'coError');
+
+            return;
+        }
 
         if (isset($result['status']) && $result['status'] === 202) {
             $this->coStatus = 202;

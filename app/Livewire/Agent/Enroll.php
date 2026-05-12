@@ -7,6 +7,8 @@ namespace App\Livewire\Agent;
 use App\Contracts\Api\AgentApi;
 use App\Contracts\Api\CardApi;
 use App\Contracts\Api\EnrollApi;
+use App\Exceptions\ApiException;
+use App\Livewire\Concerns\HandlesApiErrors;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -15,7 +17,11 @@ use Livewire\Component;
 #[Title('Enrôler un client')]
 class Enroll extends Component
 {
+    use HandlesApiErrors;
+
     public int $step = 1;
+
+    public ?string $apiError = null;
 
     // ── Step 1: Identity ───────────────────────────────────────────
     public string $fullName        = '';
@@ -90,37 +96,45 @@ class Enroll extends Component
 
     public function submitEnrollment(EnrollApi $enroll, AgentApi $agent, CardApi $cards): void
     {
+        $this->clearApiError();
         $this->loading = true;
 
-        $this->enrollResult = $enroll->enrollCustomer([
-            'fullName'         => $this->fullName,
-            'dateOfBirth'      => $this->dateOfBirth,
-            'phoneCountryCode' => $this->phoneCountryCode,
-            'phoneNumber'      => $this->phoneNumber,
-            'nationalIdNumber' => $this->nationalIdNumber,
-            'nationalIdType'  => $this->nationalIdType,
-            'addressIsland'    => $this->addressIsland ?: null,
-            'addressCity'      => $this->addressCity ?: null,
-            'addressDistrict'  => $this->addressDistrict ?: null,
-            'kycDocuments'     => $this->kycDocuments,
-        ]);
+        try {
+            $this->enrollResult = $enroll->enrollCustomer([
+                'fullName'         => $this->fullName,
+                'dateOfBirth'      => $this->dateOfBirth,
+                'phoneCountryCode' => $this->phoneCountryCode,
+                'phoneNumber'      => $this->phoneNumber,
+                'nationalIdNumber' => $this->nationalIdNumber,
+                'nationalIdType'  => $this->nationalIdType,
+                'addressIsland'    => $this->addressIsland ?: null,
+                'addressCity'      => $this->addressCity ?: null,
+                'addressDistrict'  => $this->addressDistrict ?: null,
+                'kycDocuments'     => $this->kycDocuments,
+            ]);
 
-        // Upload any queued KYC documents
-        if (! empty($this->kycDocuments)) {
-            foreach ($this->kycDocuments as $doc) {
-                $enroll->uploadKycDocument($this->enrollResult['customerId'], [
-                    'documentType' => $doc['type'],
-                    'filename'     => $doc['filename'],
-                ]);
+            // Upload any queued KYC documents
+            if (! empty($this->kycDocuments)) {
+                foreach ($this->kycDocuments as $doc) {
+                    $enroll->uploadKycDocument($this->enrollResult['customerId'], [
+                        'documentType' => $doc['type'],
+                        'filename'     => $doc['filename'],
+                    ]);
+                }
             }
-        }
 
-        // Check if agent can sell cards
-        $agentProfile        = $agent->getProfile();
-        $this->offerCardSale = $agentProfile['canSellCards'] ?? false;
+            // Check if agent can sell cards
+            $agentProfile        = $agent->getProfile();
+            $this->offerCardSale = $agentProfile['canSellCards'] ?? false;
 
-        if ($this->offerCardSale) {
-            $this->cardStock = $cards->getCardStock();
+            if ($this->offerCardSale) {
+                $this->cardStock = $cards->getCardStock();
+            }
+        } catch (ApiException $exception) {
+            $this->loading = false;
+            $this->showApiError($exception);
+
+            return;
         }
 
         $this->loading = false;

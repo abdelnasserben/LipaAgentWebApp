@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Api\Http;
 
 use App\Contracts\Api\AgentAuthApi;
+use App\Exceptions\ApiException;
 use App\Exceptions\AgentAuthException;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Log;
 
 final class HttpAgentAuthApi implements AgentAuthApi
 {
@@ -19,7 +19,7 @@ final class HttpAgentAuthApi implements AgentAuthApi
             'phoneCountryCode' => $phoneCountryCode,
             'phoneNumber' => $phoneNumber,
             'pin' => $pin,
-        ]);
+        ], [], false);
 
         if ($response->failed()) {
             throw $this->exceptionFromResponse($response, 'INVALID_CREDENTIALS');
@@ -33,7 +33,7 @@ final class HttpAgentAuthApi implements AgentAuthApi
         $response = $this->client->post('/api/v1/auth/agent/login/verify-mfa', [
             'challengeId' => $challengeId,
             'code' => $code,
-        ]);
+        ], [], false);
 
         if ($response->failed()) {
             throw $this->exceptionFromResponse($response, 'MFA_INVALID');
@@ -47,45 +47,21 @@ final class HttpAgentAuthApi implements AgentAuthApi
      */
     private function loginData(Response $response): array
     {
-        $json = $response->json();
-
-        if (! is_array($json)) {
-            throw new AgentAuthException('INVALID_RESPONSE', $response->status());
+        try {
+            return $this->client->data($response, 'INVALID_RESPONSE');
+        } catch (ApiException $exception) {
+            throw AgentAuthException::fromApiException($exception);
         }
-
-        $data = $json['data'] ?? $json;
-
-        if (! is_array($data)) {
-            throw new AgentAuthException('INVALID_RESPONSE', $response->status());
-        }
-
-        return $data;
     }
 
     private function exceptionFromResponse(Response $response, string $fallbackCode): AgentAuthException
     {
-        $json = $response->json();
-        $error = is_array($json) ? ($json['error'] ?? $json) : [];
-
-        $apiCode = is_array($error) && is_string($error['code'] ?? null)
-            ? $error['code']
-            : $this->fallbackErrorCode($response, $fallbackCode);
-
-        $apiMessage = is_array($error) && is_string($error['message'] ?? null)
-            ? $error['message']
-            : '';
-
-        Log::warning('Agent auth API request failed.', [
-            'status' => $response->status(),
-            'code' => $apiCode,
-            'message' => $apiMessage,
-            'base_url' => config('komopay.base_url'),
-        ]);
-
-        return new AgentAuthException($apiCode, $response->status(), $apiMessage);
+        return AgentAuthException::fromApiException(
+            $this->client->exceptionFromResponse($response, $this->authFallbackErrorCode($response, $fallbackCode))
+        );
     }
 
-    private function fallbackErrorCode(Response $response, string $fallbackCode): string
+    private function authFallbackErrorCode(Response $response, string $fallbackCode): string
     {
         return match ($response->status()) {
             400 => 'VALIDATION_FIELD_REQUIRED',

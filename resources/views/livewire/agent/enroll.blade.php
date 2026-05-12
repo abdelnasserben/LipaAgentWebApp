@@ -1,4 +1,6 @@
 <div>
+    <x-api-error-alert :message="$apiError" class="mx-4 mt-4" />
+
     {{-- Progress stepper --}}
     <div class="border-b border-app-border bg-app-surface">
         <div class="mx-auto max-w-5xl px-4 pt-5 md:px-6">

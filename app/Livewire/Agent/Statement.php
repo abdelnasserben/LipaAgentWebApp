@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Agent;
 
 use App\Contracts\Api\TransactionApi;
+use App\Exceptions\ApiException;
+use App\Livewire\Concerns\HandlesApiErrors;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -13,9 +15,13 @@ use Livewire\Component;
 #[Title('Relevé')]
 class Statement extends Component
 {
+    use HandlesApiErrors;
+
     public array $entries = [];
 
     public array $pagination = [];
+
+    public ?string $apiError = null;
 
     public string $filterFrom = '';
 
@@ -40,13 +46,23 @@ class Statement extends Component
 
     public function loadEntries(TransactionApi $transactions): void
     {
-        $result = $transactions->getStatements([
-            'from' => $this->filterFrom,
-            'to'   => $this->filterTo,
-        ]);
+        $this->clearApiError();
 
-        $this->entries    = $result['data'];
-        $this->pagination = $result['pagination'];
+        try {
+            $result = $transactions->getStatements([
+                'from' => $this->filterFrom,
+                'to'   => $this->filterTo,
+            ]);
+        } catch (ApiException $exception) {
+            $this->entries = [];
+            $this->pagination = [];
+            $this->showApiError($exception);
+
+            return;
+        }
+
+        $this->entries    = $result['data'] ?? [];
+        $this->pagination = $result['pagination'] ?? [];
     }
 
     public function selectEntry(string $id): void

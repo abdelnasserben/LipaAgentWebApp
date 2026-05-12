@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Api\Http;
 
 use App\Contracts\Api\OperationsApi;
+use Illuminate\Support\Str;
 
 final class HttpOperationsApi implements OperationsApi
 {
@@ -14,34 +15,49 @@ final class HttpOperationsApi implements OperationsApi
 
     public function lookupCustomer(string $phoneCountryCode, string $phoneNumber): ?array
     {
-        // TODO: GET /v1/customers/lookup?phoneCountryCode=&phoneNumber=
-        $response = $this->client->get('/v1/customers/lookup', [
+        $response = $this->client->get('/api/v1/agent/lookup', [
             'phoneCountryCode' => $phoneCountryCode,
             'phoneNumber'      => $phoneNumber,
         ]);
 
         if ($response->status() === 404) {
-            return null;
+            $exception = $this->client->exceptionFromResponse($response, 'CUSTOMER_NOT_FOUND');
+
+            if ($exception->apiCode() === 'CUSTOMER_NOT_FOUND') {
+                return null;
+            }
+
+            throw $exception;
         }
 
-        return $response->throw()->json();
+        return $this->client->data($response, 'CUSTOMER_NOT_FOUND');
     }
 
     public function processCashIn(array $data): array
     {
-        // TODO: POST /v1/operations/cash-in
-        return $this->client->post('/v1/operations/cash-in', $data)->throw()->json();
+        return $this->client->data(
+            $this->client->post('/api/v1/agent/cash-in', $data, $this->idempotencyHeaders()),
+            'VALIDATION_ERROR',
+        );
     }
 
     public function processCashOut(array $data): array
     {
-        // TODO: POST /v1/operations/cash-out (returns 202 when pending approval)
-        $response = $this->client->post('/v1/operations/cash-out', $data)->throw();
+        $response = $this->client->post('/api/v1/agent/cash-out', $data, $this->idempotencyHeaders());
+        $data = $this->client->data($response, 'VALIDATION_ERROR');
 
         if ($response->status() === 202) {
-            return ['status' => 202, 'data' => $response->json()];
+            return ['status' => 202, 'data' => $data];
         }
 
-        return $response->json();
+        return $data;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function idempotencyHeaders(): array
+    {
+        return ['Idempotency-Key' => (string) Str::uuid()];
     }
 }

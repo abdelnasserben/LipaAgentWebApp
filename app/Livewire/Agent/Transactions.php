@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Agent;
 
 use App\Contracts\Api\TransactionApi;
+use App\Exceptions\ApiException;
+use App\Livewire\Concerns\HandlesApiErrors;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -13,9 +15,13 @@ use Livewire\Component;
 #[Title('Transactions')]
 class Transactions extends Component
 {
+    use HandlesApiErrors;
+
     public array $transactions = [];
 
     public array $pagination = [];
+
+    public ?string $apiError = null;
 
     public string $search = '';
 
@@ -47,13 +53,23 @@ class Transactions extends Component
 
     public function loadTransactions(TransactionApi $transactions): void
     {
-        $result = $transactions->getTransactions([
-            'status' => $this->filterStatus,
-            'type'   => $this->filterType,
-            'search' => $this->search,
-        ]);
+        $this->clearApiError();
 
-        $data = $result['data'];
+        try {
+            $result = $transactions->getTransactions([
+                'status' => $this->filterStatus,
+                'type'   => $this->filterType,
+                'search' => $this->search,
+            ]);
+        } catch (ApiException $exception) {
+            $this->transactions = [];
+            $this->pagination = [];
+            $this->showApiError($exception);
+
+            return;
+        }
+
+        $data = $result['data'] ?? [];
 
         if ($this->search !== '') {
             $needle = mb_strtolower($this->search);
@@ -64,12 +80,18 @@ class Transactions extends Component
         }
 
         $this->transactions = $data;
-        $this->pagination   = $result['pagination'];
+        $this->pagination   = $result['pagination'] ?? [];
     }
 
     public function selectTransaction(string $id, TransactionApi $transactions): void
     {
-        $this->selectedTransaction = $transactions->getTransaction($id);
+        $this->clearApiError();
+
+        try {
+            $this->selectedTransaction = $transactions->getTransaction($id);
+        } catch (ApiException $exception) {
+            $this->showApiError($exception);
+        }
     }
 
     public function closeTransaction(): void

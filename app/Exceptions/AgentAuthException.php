@@ -4,25 +4,29 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
-use RuntimeException;
-
-final class AgentAuthException extends RuntimeException
+final class AgentAuthException extends ApiException
 {
+    /**
+     * @param  array<int, mixed>  $details
+     */
     public function __construct(
-        private readonly string $apiCode,
-        private readonly int $statusCode = 0,
+        string $apiCode,
+        int $statusCode = 0,
         string $apiMessage = '',
+        array $details = [],
+        ?string $correlationId = null,
     ) {
-        parent::__construct($apiMessage !== '' ? $apiMessage : $apiCode, $statusCode);
+        parent::__construct($apiCode, $statusCode, $apiMessage, $details, $correlationId);
     }
 
-    public function apiCode(): string
+    public static function fromApiException(ApiException $exception): self
     {
-        return $this->apiCode;
-    }
-
-    public function statusCode(): int
-    {
-        return $this->statusCode;
+        return new self(
+            $exception->apiCode(),
+            $exception->statusCode(),
+            $exception->getMessage(),
+            $exception->details(),
+            $exception->correlationId(),
+        );
     }
 }

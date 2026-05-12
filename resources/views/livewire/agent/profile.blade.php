@@ -1,4 +1,6 @@
 <div>
+    <x-api-error-alert :message="$apiError" class="mx-4 mt-4" />
+
     {{-- Tabs --}}
     <div class="border-b border-app-border bg-app-surface">
         <div class="flex gap-0 overflow-x-auto px-4 md:mx-auto md:max-w-5xl md:px-6">

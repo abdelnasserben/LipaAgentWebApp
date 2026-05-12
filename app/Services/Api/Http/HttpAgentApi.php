@@ -14,19 +14,16 @@ final class HttpAgentApi implements AgentApi
 
     public function getProfile(): array
     {
-        // TODO: GET /v1/agents/me
-        return $this->client->get('/v1/agents/me')->throw()->json();
+        return $this->client->data($this->client->get('/api/v1/agent/me'), 'ACTOR_NOT_FOUND');
     }
 
     public function getBalance(): array
     {
-        // TODO: GET /v1/agents/me/balance
-        return $this->client->get('/v1/agents/me/balance')->throw()->json();
+        return $this->client->data($this->client->get('/api/v1/agent/balance'), 'WALLET_NOT_FOUND');
     }
 
     public function getDailySummary(): array
     {
-        // TODO: GET /v1/agents/me/summary?period=today
-        return $this->client->get('/v1/agents/me/summary', ['period' => 'today'])->throw()->json();
+        return $this->client->data($this->client->get('/api/v1/agent/summary/daily'), 'ACTOR_NOT_FOUND');
     }
 }

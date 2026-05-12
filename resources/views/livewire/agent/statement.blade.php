@@ -1,4 +1,6 @@
 <div>
+    <x-api-error-alert :message="$apiError" class="mx-4 mt-4" />
+
     {{-- Date range filter --}}
     <div class="px-4 pt-3">
         <div class="mb-1 rounded-[10px] border border-app-border bg-app-surface px-4 py-3.5">

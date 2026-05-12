@@ -14,16 +14,17 @@ final class HttpEnrollApi implements EnrollApi
 
     public function enrollCustomer(array $data): array
     {
-        // TODO: POST /v1/customers/enroll
-        return $this->client->post('/v1/customers/enroll', $data)->throw()->json();
+        return $this->client->data(
+            $this->client->post('/api/v1/agent/customers/enroll', $data),
+            'VALIDATION_ERROR',
+        );
     }
 
     public function uploadKycDocument(string $customerId, array $data): array
     {
-        // TODO: POST /v1/customers/{customerId}/kyc-documents
-        return $this->client
-            ->post('/v1/customers/' . urlencode($customerId) . '/kyc-documents', $data)
-            ->throw()
-            ->json();
+        return $this->client->data(
+            $this->client->post('/api/v1/agent/customers/'.urlencode($customerId).'/kyc-documents', $data),
+            'VALIDATION_ERROR',
+        );
     }
 }
