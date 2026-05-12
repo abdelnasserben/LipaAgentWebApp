@@ -35,4 +35,39 @@ final class HttpCardApi implements CardApi
             'VALIDATION_ERROR',
         );
     }
+
+    public function reportLost(string $customerId, string $cardId): array
+    {
+        return $this->client->data(
+            $this->client->post(
+                "/api/v1/agent/customers/{$customerId}/cards/{$cardId}/report-lost",
+            ),
+            'CARD_NOT_FOUND',
+        );
+    }
+
+    public function reportStolen(string $customerId, string $cardId): array
+    {
+        return $this->client->data(
+            $this->client->post(
+                "/api/v1/agent/customers/{$customerId}/cards/{$cardId}/report-stolen",
+            ),
+            'CARD_NOT_FOUND',
+        );
+    }
+
+    public function replaceCard(string $customerId, string $cardId, array $data): array
+    {
+        return $this->client->data(
+            $this->client->post(
+                "/api/v1/agent/customers/{$customerId}/cards/{$cardId}/replace",
+                [
+                    'stockId'        => $data['stockId'],
+                    'replacementFee' => (int) $data['replacementFee'],
+                ],
+                ['Idempotency-Key' => (string) Str::uuid()],
+            ),
+            'VALIDATION_ERROR',
+        );
+    }
 }

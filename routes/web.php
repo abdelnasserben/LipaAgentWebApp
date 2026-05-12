@@ -24,6 +24,8 @@ Route::middleware(\App\Http\Middleware\AgentAuth::class)->group(function () {
         ->name('operations.tab')
         ->where('tab', 'cash-in|cash-out');
     Route::get('/enroll', \App\Livewire\Agent\Enroll::class)->name('enroll');
+    Route::get('/cards', \App\Livewire\Agent\Cards::class)->name('cards');
+    Route::get('/customers/kyc', \App\Livewire\Agent\CustomerKyc::class)->name('customers.kyc');
     Route::get('/transactions', \App\Livewire\Agent\Transactions::class)->name('transactions');
     Route::get('/statement', \App\Livewire\Agent\Statement::class)->name('statement');
     Route::get('/commission', \App\Livewire\Agent\Commission::class)->name('commission');

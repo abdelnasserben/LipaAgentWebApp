@@ -11,6 +11,7 @@ use App\Contracts\Api\CommissionApi;
 use App\Contracts\Api\EnrollApi;
 use App\Contracts\Api\LimitsApi;
 use App\Contracts\Api\OperationsApi;
+use App\Contracts\Api\TotpApi;
 use App\Contracts\Api\TransactionApi;
 use App\Services\Api\Http\HttpAgentApi;
 use App\Services\Api\Http\HttpAgentAuthApi;
@@ -19,6 +20,7 @@ use App\Services\Api\Http\HttpCommissionApi;
 use App\Services\Api\Http\HttpEnrollApi;
 use App\Services\Api\Http\HttpLimitsApi;
 use App\Services\Api\Http\HttpOperationsApi;
+use App\Services\Api\Http\HttpTotpApi;
 use App\Services\Api\Http\HttpTransactionApi;
 use App\Services\Api\Http\KomopayClient;
 use App\Services\Api\Mock\MockAgentApi;
@@ -28,6 +30,7 @@ use App\Services\Api\Mock\MockCommissionApi;
 use App\Services\Api\Mock\MockEnrollApi;
 use App\Services\Api\Mock\MockLimitsApi;
 use App\Services\Api\Mock\MockOperationsApi;
+use App\Services\Api\Mock\MockTotpApi;
 use App\Services\Api\Mock\MockTransactionApi;
 use Illuminate\Support\ServiceProvider;
 
@@ -50,6 +53,7 @@ class ApiServiceProvider extends ServiceProvider
         EnrollApi::class      => [MockEnrollApi::class,      HttpEnrollApi::class],
         LimitsApi::class      => [MockLimitsApi::class,      HttpLimitsApi::class],
         OperationsApi::class  => [MockOperationsApi::class,  HttpOperationsApi::class],
+        TotpApi::class        => [MockTotpApi::class,        HttpTotpApi::class],
     ];
 
     public function register(): void

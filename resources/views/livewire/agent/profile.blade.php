@@ -238,9 +238,19 @@
                                 (Google Authenticator, etc.).
                             </p>
 
-                            <button wire:click="toggleTotpSetup" type="button"
-                                class="cursor-pointer rounded-lg border-0 bg-app-accent px-[18px] py-2.5 text-[13px] font-semibold text-white">
-                                Configurer le TOTP
+                            @if ($totpSuccess)
+                                <div class="mb-3 flex items-center gap-2 rounded-lg border border-app-green bg-app-green-bg px-3 py-2 text-[12px] text-app-green">
+                                    <x-agent-icon name="check" :size="14" />
+                                    {{ $totpSuccess }}
+                                </div>
+                            @endif
+
+                            <button wire:click="toggleTotpSetup" wire:loading.attr="disabled" type="button"
+                                class="cursor-pointer rounded-lg border-0 bg-app-accent px-[18px] py-2.5 text-[13px] font-semibold text-white disabled:opacity-70">
+                                <span wire:loading.remove wire:target="toggleTotpSetup">
+                                    {{ $totpSetupOpen ? 'Annuler la configuration' : 'Configurer le TOTP' }}
+                                </span>
+                                <span wire:loading wire:target="toggleTotpSetup">Préparation…</span>
                             </button>
                         </div>
                     </div>
@@ -255,32 +265,31 @@
 
                             <div class="p-4">
                                 <p class="mb-5 mt-0 text-[13px] leading-relaxed text-app-muted">
-                                    Scannez ce QR code avec votre application d'authentification puis saisissez le code généré
-                                    pour activer la protection 2FA.
+                                    Scannez ce QR code avec votre application d'authentification (Google Authenticator,
+                                    Authy, 1Password…) puis saisissez le code à 6 chiffres généré pour activer la
+                                    protection 2FA.
                                 </p>
 
-                                {{-- QR Card --}}
-                                <div class="mb-5 flex justify-center">
-                                    <div class="rounded-2xl border border-app-border bg-app-bg p-4">
-                                        <div class="rounded-xl bg-white p-4 shadow-sm">
-                                            @if (!empty($totpQrCodeSvg))
+                                @if (!empty($totpQrCodeSvg))
+                                    <div class="mb-5 flex justify-center">
+                                        <div class="rounded-2xl border border-app-border bg-app-bg p-4">
+                                            <div class="rounded-xl bg-white p-3 shadow-sm">
                                                 {!! $totpQrCodeSvg !!}
-                                            @elseif(!empty($totpQrCodeUrl))
-                                                <img src="{{ $totpQrCodeUrl }}" alt="QR code TOTP" class="h-44 w-44" />
-                                            @else
-                                                <div class="grid h-44 w-44 grid-cols-7 gap-1 bg-white p-2">
-                                                    @foreach (range(1, 49) as $i)
-                                                        <div @class([
-                                                            'rounded-[2px]',
-                                                            'bg-black' => in_array($i, [1,2,3,5,7,8,10,12,14,15,16,18,20,22,24,25,27,29,31,33,35,36,38,40,42,43,45,47,49]),
-                                                            'bg-white' => ! in_array($i, [1,2,3,5,7,8,10,12,14,15,16,18,20,22,24,25,27,29,31,33,35,36,38,40,42,43,45,47,49]),
-                                                        ])></div>
-                                                    @endforeach
-                                                </div>
-                                            @endif
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                @endif
+
+                                @if (!empty($totpQrUri))
+                                    <div class="mb-5">
+                                        <div class="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                            URI à scanner ou coller dans l'app
+                                        </div>
+                                        <div class="break-all rounded-lg border border-app-border bg-app-bg px-3.5 py-3 font-mono text-[11px] text-app-text">
+                                            {{ $totpQrUri }}
+                                        </div>
+                                    </div>
+                                @endif
 
                                 @if (!empty($totpSecret))
                                     <div class="mb-5">
@@ -308,9 +317,20 @@
                                     @enderror
                                 </div>
 
-                                <button wire:click="confirmTotpSetup" type="button"
-                                    class="w-full cursor-pointer rounded-xl border-0 bg-app-accent px-5 py-3 text-[14px] font-bold text-white transition-opacity hover:opacity-95">
-                                    Activer le TOTP
+                                @if ($totpError)
+                                    <div class="mb-3 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3 py-2 text-[12px] text-app-red">
+                                        <x-agent-icon name="warning" :size="14" />
+                                        {{ $totpError }}
+                                    </div>
+                                @endif
+
+                                <button wire:click="confirmTotpSetup" wire:loading.attr="disabled" type="button"
+                                    class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-0 bg-app-accent px-5 py-3 text-[14px] font-bold text-white transition-opacity hover:opacity-95 disabled:opacity-70">
+                                    <span wire:loading.remove wire:target="confirmTotpSetup">Activer le TOTP</span>
+                                    <span wire:loading wire:target="confirmTotpSetup" class="flex items-center gap-2">
+                                        <x-spinner :size="14" />
+                                        Activation…
+                                    </span>
                                 </button>
                             </div>
                         </div>

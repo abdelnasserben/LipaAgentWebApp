@@ -39,6 +39,8 @@
                     ['route' => 'dashboard',     'label' => 'Accueil',       'path' => 'dashboard',     'icon' => 'home'],
                     ['route' => 'operations',    'label' => 'Opérations',    'path' => 'operations',    'icon' => 'operations'],
                     ['route' => 'enroll',        'label' => 'Enrôlement',    'path' => 'enroll',        'icon' => 'enroll'],
+                    ['route' => 'customers.kyc', 'label' => 'KYC client',    'path' => 'customers/kyc', 'icon' => 'enroll'],
+                    ['route' => 'cards',         'label' => 'Cartes',        'path' => 'cards',         'icon' => 'card'],
                     ['route' => 'transactions',  'label' => 'Transactions',  'path' => 'transactions',  'icon' => 'transactions'],
                     ['route' => 'statement',     'label' => 'Relevé',        'path' => 'statement',     'icon' => 'statement'],
                     ['route' => 'commission',    'label' => 'Commission',    'path' => 'commission',    'icon' => 'commission'],
