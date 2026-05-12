@@ -5,85 +5,193 @@ declare(strict_types=1);
 namespace App\Livewire\Auth;
 
 use App\Contracts\Api\AgentAuthApi;
+use App\Exceptions\AgentAuthException;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.guest')]
-#[Title('Connexion')]
+#[Title('Connexion Agent')]
 class Login extends Component
 {
-    public string $step = 'phone'; // phone | otp
+    public string $step = 'credentials'; // credentials | mfa
 
     public string $phoneCountryCode = '269';
+
     public string $phoneNumber = '';
+
+    public string $pin = '';
+
     public string $challengeId = '';
-    public string $otpCode = '';
+
+    public string $totpCode = '';
 
     public ?string $error = null;
-    public bool $loading = false;
-    public int $resendCountdown = 0;
 
-    protected array $rules = [
-        'phoneCountryCode' => 'required|max:5',
-        'phoneNumber'      => 'required|regex:/^\d{4,15}$/',
-    ];
-
-    public function requestOtp(AgentAuthApi $auth): void
+    public function login(AgentAuthApi $auth): void
     {
+        $this->normalizeCredentials();
+
         $this->validate([
-            'phoneCountryCode' => 'required|max:5',
-            'phoneNumber'      => 'required|regex:/^\d{4,15}$/',
-        ]);
+            'phoneCountryCode' => 'required|regex:/^\d{1,5}$/',
+            'phoneNumber' => 'required|regex:/^\d{4,15}$/',
+            'pin' => 'required|regex:/^\d{4,8}$/',
+        ], $this->validationMessages());
 
         $this->error = null;
 
-        $result = $auth->requestOtp($this->phoneCountryCode, $this->phoneNumber);
+        try {
+            $result = $auth->login($this->phoneCountryCode, $this->phoneNumber, $this->pin);
+        } catch (AgentAuthException $exception) {
+            $this->error = $this->messageForApiError($exception->apiCode());
 
-        if (! $result) {
-            $this->error = 'Numéro non trouvé ou compte non actif.';
+            return;
+        }
+
+        if (($result['mfaRequired'] ?? false) === true) {
+            $this->startMfaStep($result);
+
+            return;
+        }
+
+        $this->completeLogin($result);
+    }
+
+    public function verifyMfa(AgentAuthApi $auth): void
+    {
+        $this->validate([
+            'totpCode' => 'required|regex:/^\d{6}$/',
+        ], $this->validationMessages());
+
+        $this->error = null;
+
+        try {
+            $result = $auth->verifyMfa($this->challengeId, $this->totpCode);
+        } catch (AgentAuthException $exception) {
+            $this->error = $this->messageForApiError($exception->apiCode());
+            $this->totpCode = '';
+
+            return;
+        }
+
+        $this->completeLogin($result);
+    }
+
+    public function back(): void
+    {
+        $this->step = 'credentials';
+        $this->challengeId = '';
+        $this->totpCode = '';
+        $this->error = null;
+    }
+
+    private function normalizeCredentials(): void
+    {
+        $countryCode = preg_replace('/\D+/', '', $this->phoneCountryCode) ?? '';
+        $phoneNumber = preg_replace('/\D+/', '', $this->phoneNumber) ?? '';
+
+        if (str_starts_with($phoneNumber, '00'.$countryCode)) {
+            $phoneNumber = substr($phoneNumber, strlen('00'.$countryCode));
+        }
+
+        if ($countryCode !== '' && str_starts_with($phoneNumber, $countryCode)) {
+            $phoneNumber = substr($phoneNumber, strlen($countryCode));
+        }
+
+        if (str_starts_with($phoneNumber, '0') && strlen($phoneNumber) > 7) {
+            $phoneNumber = ltrim($phoneNumber, '0');
+        }
+
+        $this->phoneCountryCode = $countryCode;
+        $this->phoneNumber = $phoneNumber;
+        $this->pin = trim($this->pin);
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     */
+    private function startMfaStep(array $result): void
+    {
+        if (($result['mfaFactor'] ?? 'TOTP') !== 'TOTP') {
+            $this->error = "MFA requis, mais le facteur retourne n'est pas pris en charge.";
+
+            return;
+        }
+
+        if (! is_string($result['challengeId'] ?? null) || $result['challengeId'] === '') {
+            $this->error = 'MFA requis, mais le challenge est absent.';
+
             return;
         }
 
         $this->challengeId = $result['challengeId'];
-        $this->resendCountdown = 60;
-        $this->step = 'otp';
+        $this->totpCode = '';
+        $this->step = 'mfa';
     }
 
-    public function verifyOtp(AgentAuthApi $auth): void
+    /**
+     * @param  array<string, mixed>  $result
+     */
+    private function completeLogin(array $result): void
     {
-        $this->validate([
-            'otpCode' => 'required|regex:/^\d{6}$/',
-        ]);
+        $tokens = $result['tokens'] ?? null;
 
-        $this->error = null;
+        if (! is_array($tokens) || ! is_string($tokens['accessToken'] ?? null)) {
+            $this->error = 'Reponse de connexion incomplete.';
 
-        if (! $auth->verifyOtp($this->challengeId, $this->otpCode)) {
-            $this->error = 'Code incorrect ou expiré.';
             return;
         }
 
         session([
             'agent_authenticated' => true,
-            'agent_phone'         => $this->phoneCountryCode . $this->phoneNumber,
+            'agent_phone' => $this->phoneCountryCode.$this->phoneNumber,
+            'agent_access_token' => $tokens['accessToken'],
+            'agent_access_token_expires_at' => $tokens['accessTokenExpiresAt'] ?? null,
+            'agent_refresh_token' => $tokens['refreshToken'] ?? null,
+            'agent_refresh_token_expires_at' => $tokens['refreshTokenExpiresAt'] ?? null,
         ]);
 
         $this->redirect(route('dashboard'), navigate: true);
     }
 
-    public function back(): void
+    /**
+     * @return array<string, string>
+     */
+    private function validationMessages(): array
     {
-        $this->step = 'phone';
-        $this->otpCode = '';
-        $this->error = null;
+        return [
+            'phoneCountryCode.required' => 'Indicatif pays requis.',
+            'phoneCountryCode.regex' => 'Indicatif pays invalide.',
+            'phoneNumber.required' => 'Numero de telephone requis.',
+            'phoneNumber.regex' => 'Numero de telephone invalide.',
+            'pin.required' => 'PIN Agent requis.',
+            'pin.regex' => 'Le PIN Agent doit contenir 4 a 8 chiffres.',
+            'totpCode.required' => 'Code TOTP requis.',
+            'totpCode.regex' => 'Le code TOTP doit contenir 6 chiffres.',
+        ];
     }
 
-    public function resend(AgentAuthApi $auth): void
+    private function messageForApiError(string $apiCode): string
     {
-        $this->requestOtp($auth);
+        return match ($apiCode) {
+            'INVALID_CREDENTIALS' => 'Identifiants invalides. Verifiez le telephone et le PIN.',
+            'AUTH_PIN_NOT_SET' => "Aucun PIN Agent n'est configure pour ce compte.",
+            'AUTH_PIN_LOCKED' => 'PIN Agent verrouille apres trop de tentatives. Reessayez dans 15 minutes.',
+            'MFA_REQUIRED' => 'Code TOTP requis pour terminer la connexion.',
+            'MFA_INVALID' => 'Code TOTP invalide ou expire.',
+            'LEGACY_OTP_LOGIN_REMOVED' => "L'ancien login SMS OTP n'est plus disponible. Utilisez telephone et PIN.",
+            'AUTH_ENDPOINT_NOT_FOUND' => "Endpoint de login Agent introuvable sur l'API configuree.",
+            'VALIDATION_FIELD_REQUIRED' => 'Tous les champs obligatoires doivent etre renseignes.',
+            'ACTOR_PENDING_KYC' => 'Compte Agent en attente de validation KYC.',
+            'ACTOR_SUSPENDED' => 'Compte Agent suspendu. Contactez le support Lipa.',
+            'ACTOR_CLOSED' => 'Compte Agent ferme. Contactez le support Lipa.',
+            'TERMINAL_RATE_LIMIT' => 'Trop de tentatives. Reessayez dans quelques instants.',
+            default => 'Connexion impossible pour le moment.',
+        };
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.auth.login');
     }

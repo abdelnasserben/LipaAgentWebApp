@@ -7,11 +7,34 @@ namespace App\Contracts\Api;
 interface AgentAuthApi
 {
     /**
-     * Request an OTP challenge for the given phone number.
+     * Authenticate an Agent with the PIN-first flow.
      *
-     * @return array{challengeId: string, expiresAt: string}|false
+     * @return array{
+     *     mfaRequired: bool,
+     *     challengeId?: string,
+     *     mfaFactor?: string,
+     *     tokens?: array{
+     *         accessToken: string,
+     *         accessTokenExpiresAt: string,
+     *         refreshToken: string,
+     *         refreshTokenExpiresAt: string
+     *     }
+     * }
      */
-    public function requestOtp(string $phoneCountryCode, string $phoneNumber): array|false;
+    public function login(string $phoneCountryCode, string $phoneNumber, string $pin): array;
 
-    public function verifyOtp(string $challengeId, string $otpCode): bool;
+    /**
+     * Verify the TOTP challenge returned by the PIN-first login flow.
+     *
+     * @return array{
+     *     mfaRequired: bool,
+     *     tokens?: array{
+     *         accessToken: string,
+     *         accessTokenExpiresAt: string,
+     *         refreshToken: string,
+     *         refreshTokenExpiresAt: string
+     *     }
+     * }
+     */
+    public function verifyMfa(string $challengeId, string $code): array;
 }
