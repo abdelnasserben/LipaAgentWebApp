@@ -1,4 +1,7 @@
 {
+    "agentId": "agt_01HXKZ9P2Q3R4S5T6U7V8W9X",
+    "periodStart": "2026-05-12T00:00:00Z",
+    "periodEnd": "2026-05-12T23:59:59Z",
     "totalCompletedAmountToday": 229500,
     "totalCompletedCountToday": 23,
     "commissionEarnedToday": 3840,

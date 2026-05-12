@@ -30,8 +30,10 @@ Route::middleware(\App\Http\Middleware\AgentAuth::class)->group(function () {
     Route::get('/profile', \App\Livewire\Agent\Profile::class)->name('profile');
 });
 
-Route::post('/logout', function () {
-    session()->forget('agent_authenticated');
+Route::post('/logout', function (\App\Contracts\Api\AgentAuthApi $auth) {
+    if (session('agent_access_token')) {
+        $auth->logout();
+    }
     session()->flush();
     return redirect('/login');
 })->name('logout');

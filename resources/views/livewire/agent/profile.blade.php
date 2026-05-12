@@ -114,69 +114,67 @@
 
         {{-- LIMITS TAB --}}
         @elseif($activeTab === 'limits')
+            @php
+                $fmt = fn ($v) => $v === null ? '—' : number_format((int) $v, 0, ',', ' ') . ' KMF';
+                $count = fn ($v) => $v === null ? '—' : (string) (int) $v;
+            @endphp
+
             <div class="grid gap-4 md:grid-cols-2 md:items-start">
-                {{-- Float info --}}
-                <div class="rounded-xl border border-app-border bg-app-surface p-4 md:col-span-2">
-                    <div class="mb-3 text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
-                        Float
+                <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface md:col-span-2">
+                    <div class="border-b border-app-border px-4 py-3">
+                        <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+                            Profil de limites
+                        </div>
                     </div>
-
-                    <div class="mb-1 flex items-baseline justify-between">
-                        <span class="text-[13px] text-app-muted">Solde actuel</span>
-                        <span class="font-mono text-[15px] font-bold text-app-text">
-                            {{ number_format($limits['float']['current'], 0, ',', ' ') }} KMF
-                        </span>
-                    </div>
-
-                    <div class="mb-2.5 flex justify-between text-[11px] text-app-muted">
-                        <span>Min: {{ number_format($limits['float']['min'], 0, ',', ' ') }} KMF</span>
-                        <span>Max: {{ number_format($limits['float']['max'], 0, ',', ' ') }} KMF</span>
-                    </div>
-
-                    @php $floatPct = min(($limits['float']['current'] / $limits['float']['max']) * 100, 100); @endphp
-
-                    <div class="h-1.5 overflow-hidden rounded-full bg-app-border">
-                        <div class="h-full rounded-full bg-app-accent" style="width: {{ $floatPct }}%;"></div>
+                    <div class="px-4">
+                        <x-detail-row label="Profil">{{ $limits['profileName'] ?? '—' }}</x-detail-row>
+                        <x-detail-row label="Niveau KYC requis">
+                            <x-agent-badge :status="$limits['requiredKycLevel'] ?? 'KYC_NONE'" />
+                        </x-detail-row>
+                        <x-detail-row label="ID Profil" :mono="true" :border="false">
+                            {{ $limits['limitProfileId'] ?? '—' }}
+                        </x-detail-row>
                     </div>
                 </div>
 
-                {{-- Cash-in limits --}}
                 <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
                     <div class="border-b border-app-border px-4 py-3">
                         <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
-                            Limites Cash-In
+                            Limites par montant
                         </div>
                     </div>
-
-                    <div class="flex flex-col gap-4 p-4">
-                        @foreach ([['label' => 'Journalier', 'data' => $limits['cashIn']['daily']], ['label' => 'Hebdomadaire', 'data' => $limits['cashIn']['weekly']], ['label' => 'Mensuel', 'data' => $limits['cashIn']['monthly']]] as $period)
-                            <div>
-                                <div class="mb-1.5 text-xs font-semibold text-app-text">
-                                    {{ $period['label'] }}
-                                </div>
-                                <x-limit-bar :used="$period['data']['used']" :limit="$period['data']['limit']" />
-                            </div>
-                        @endforeach
+                    <div class="px-4">
+                        <x-detail-row label="Montant min. / opération" :mono="true">
+                            {{ $fmt($limits['minTransactionAmount'] ?? null) }}
+                        </x-detail-row>
+                        <x-detail-row label="Montant max. / opération" :mono="true">
+                            {{ $fmt($limits['maxTransactionAmount'] ?? null) }}
+                        </x-detail-row>
+                        <x-detail-row label="Plafond journalier" :mono="true">
+                            {{ $fmt($limits['maxDailyAmount'] ?? null) }}
+                        </x-detail-row>
+                        <x-detail-row label="Plafond hebdomadaire" :mono="true">
+                            {{ $fmt($limits['maxWeeklyAmount'] ?? null) }}
+                        </x-detail-row>
+                        <x-detail-row label="Plafond mensuel" :mono="true" :border="false">
+                            {{ $fmt($limits['maxMonthlyAmount'] ?? null) }}
+                        </x-detail-row>
                     </div>
                 </div>
 
-                {{-- Cash-out limits --}}
                 <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
                     <div class="border-b border-app-border px-4 py-3">
                         <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
-                            Limites Cash-Out
+                            Limites en volume
                         </div>
                     </div>
-
-                    <div class="flex flex-col gap-4 p-4">
-                        @foreach ([['label' => 'Journalier', 'data' => $limits['cashOut']['daily']], ['label' => 'Hebdomadaire', 'data' => $limits['cashOut']['weekly']], ['label' => 'Mensuel', 'data' => $limits['cashOut']['monthly']]] as $period)
-                            <div>
-                                <div class="mb-1.5 text-xs font-semibold text-app-text">
-                                    {{ $period['label'] }}
-                                </div>
-                                <x-limit-bar :used="$period['data']['used']" :limit="$period['data']['limit']" />
-                            </div>
-                        @endforeach
+                    <div class="px-4">
+                        <x-detail-row label="Nb. max. d'opérations / jour" :mono="true">
+                            {{ $count($limits['maxDailyTransactionCount'] ?? null) }}
+                        </x-detail-row>
+                        <x-detail-row label="Nb. max. d'opérations / mois" :mono="true" :border="false">
+                            {{ $count($limits['maxMonthlyTransactionCount'] ?? null) }}
+                        </x-detail-row>
                     </div>
                 </div>
             </div>

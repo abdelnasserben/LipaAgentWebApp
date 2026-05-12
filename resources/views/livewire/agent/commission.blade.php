@@ -157,12 +157,17 @@
                             {{ $comDate }}
                         </div>
 
-                        {{-- Type badge --}}
-                        <div class="shrink-0">
-                            <x-agent-badge :status="$com['type']" />
+                        {{-- Transaction ref --}}
+                        <div class="min-w-0 flex-1 truncate font-mono text-[11px] text-app-muted">
+                            {{ $com['transactionId'] ?? '—' }}
                         </div>
 
-                        <div class="flex-1"></div>
+                        {{-- Settlement mode --}}
+                        @if (! empty($com['settlementMode']))
+                            <div class="shrink-0">
+                                <x-agent-badge :status="$com['settlementMode']" />
+                            </div>
+                        @endif
 
                         {{-- Amount --}}
                         <div class="shrink-0 font-mono text-[13px] font-bold text-app-green">

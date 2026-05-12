@@ -80,20 +80,17 @@ class Profile extends Component
      */
     private function defaultLimits(): array
     {
-        $emptyPeriod = ['used' => 0, 'limit' => 1, 'remaining' => 1];
-
         return [
-            'float' => ['current' => 0, 'min' => 0, 'max' => 1],
-            'cashIn' => [
-                'daily' => $emptyPeriod,
-                'weekly' => $emptyPeriod,
-                'monthly' => $emptyPeriod,
-            ],
-            'cashOut' => [
-                'daily' => $emptyPeriod,
-                'weekly' => $emptyPeriod,
-                'monthly' => $emptyPeriod,
-            ],
+            'limitProfileId' => null,
+            'profileName' => '—',
+            'maxTransactionAmount' => null,
+            'minTransactionAmount' => null,
+            'maxDailyAmount' => null,
+            'maxWeeklyAmount' => null,
+            'maxMonthlyAmount' => null,
+            'maxDailyTransactionCount' => null,
+            'maxMonthlyTransactionCount' => null,
+            'requiredKycLevel' => '—',
         ];
     }
 }

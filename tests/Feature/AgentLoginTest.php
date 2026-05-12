@@ -46,6 +46,8 @@ class AgentLoginTest extends TestCase
             {
                 throw new AgentAuthException('MFA_INVALID', 401);
             }
+
+            public function logout(): void {}
         });
 
         Livewire::test(Login::class)
@@ -94,6 +96,8 @@ class AgentLoginTest extends TestCase
             {
                 throw new AgentAuthException('MFA_INVALID', 401);
             }
+
+            public function logout(): void {}
         });
 
         Livewire::test(Login::class)
@@ -138,6 +142,8 @@ class AgentLoginTest extends TestCase
                     ],
                 ];
             }
+
+            public function logout(): void {}
         });
 
         Livewire::test(Login::class)
@@ -166,6 +172,8 @@ class AgentLoginTest extends TestCase
             {
                 throw new AgentAuthException('MFA_INVALID', 401);
             }
+
+            public function logout(): void {}
         });
 
         Livewire::test(Login::class)

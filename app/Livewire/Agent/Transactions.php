@@ -59,7 +59,6 @@ class Transactions extends Component
             $result = $transactions->getTransactions([
                 'status' => $this->filterStatus,
                 'type'   => $this->filterType,
-                'search' => $this->search,
             ]);
         } catch (ApiException $exception) {
             $this->transactions = [];
@@ -71,11 +70,14 @@ class Transactions extends Component
 
         $data = $result['data'] ?? [];
 
+        // Client-side description search: the Agent transactions endpoint does
+        // not accept a free-text search query (spec §5.3), so we filter locally.
         if ($this->search !== '') {
             $needle = mb_strtolower($this->search);
             $data   = array_values(array_filter(
                 $data,
                 fn (array $t): bool => str_contains(mb_strtolower($t['description'] ?? ''), $needle)
+                    || str_contains(mb_strtolower($t['id'] ?? ''), $needle)
             ));
         }
 

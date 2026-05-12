@@ -1,17 +1,12 @@
 {
-    "float": {
-        "current": 184500,
-        "min": 20000,
-        "max": 500000
-    },
-    "cashIn": {
-        "daily": { "limit": 200000, "used": 142000 },
-        "weekly": { "limit": 800000, "used": 387000 },
-        "monthly": { "limit": 3000000, "used": 1240000 }
-    },
-    "cashOut": {
-        "daily": { "limit": 150000, "used": 87500 },
-        "weekly": { "limit": 600000, "used": 280000 },
-        "monthly": { "limit": 2500000, "used": 980000 }
-    }
+    "limitProfileId": "lp_01HXKZ9P",
+    "profileName": "Agent Standard",
+    "maxTransactionAmount": 200000,
+    "minTransactionAmount": 500,
+    "maxDailyAmount": 800000,
+    "maxWeeklyAmount": 3000000,
+    "maxMonthlyAmount": 8000000,
+    "maxDailyTransactionCount": 50,
+    "maxMonthlyTransactionCount": 800,
+    "requiredKycLevel": "KYC_BASIC"
 }

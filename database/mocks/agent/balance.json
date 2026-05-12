@@ -3,5 +3,6 @@
     "availableBalance": 284750,
     "frozenBalance": 0,
     "currency": "KMF",
-    "walletStatus": "ACTIVE"
+    "walletStatus": "ACTIVE",
+    "updatedAt": "2026-05-12T08:30:00Z"
 }

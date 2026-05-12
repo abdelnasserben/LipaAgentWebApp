@@ -352,10 +352,12 @@
                                 <div>
                                     <label
                                         class="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
-                                        Référence marchand
+                                        Identifiant marchand (UUID)
                                     </label>
-                                    <input type="text" wire:model="coMerchantRef" placeholder="ex. MARCH-001"
-                                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-sm tracking-[0.03em] text-app-text outline-none focus:border-app-amber" />
+                                    <input type="text" wire:model="coMerchantId"
+                                        placeholder="00000000-0000-0000-0000-000000000000"
+                                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-[11px] tracking-[0.03em] text-app-text outline-none focus:border-app-amber" />
+                                    @error('coMerchantId') <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -398,10 +400,10 @@
                             </div>
 
                             <div class="flex justify-end">
-                                <button wire:click="lookupMerchant" wire:loading.attr="disabled" type="button"
+                                <button wire:click="confirmCashOut" wire:loading.attr="disabled" type="button"
                                     class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-amber p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-48">
-                                    <span wire:loading.remove wire:target="lookupMerchant">Soumettre</span>
-                                    <span wire:loading.flex wire:target="lookupMerchant"
+                                    <span wire:loading.remove wire:target="confirmCashOut">Continuer</span>
+                                    <span wire:loading.flex wire:target="confirmCashOut"
                                         class="hidden items-center gap-2">
                                         <x-spinner :size="16" />
                                         Vérification…
@@ -427,14 +429,12 @@
                                 </div>
 
                                 <div class="min-w-0">
-                                    <div class="truncate text-base font-bold text-app-text">
-                                        {{ $coMerchant['businessName'] }}</div>
-                                    <div class="mt-0.5 font-mono text-[11px] text-app-muted">{{ $coMerchantRef }}
+                                    <div class="text-[10px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                        Marchand
                                     </div>
-                                </div>
-
-                                <div class="ml-auto">
-                                    <x-agent-badge status="ACTIVE" />
+                                    <div class="mt-0.5 truncate font-mono text-[11px] text-app-text">
+                                        {{ $coMerchantId }}
+                                    </div>
                                 </div>
                             </div>
 
@@ -554,22 +554,22 @@
                             </div>
 
                             <div class="mb-6 rounded-xl border border-app-border bg-app-bg px-4 py-1 text-left">
-                                <x-detail-row label="ID Transaction"
-                                    :mono="true">{{ $coResult['transactionId'] }}</x-detail-row>
-
                                 @if ($coStatus === 202)
                                     <x-detail-row label="Réf. approbation"
-                                        :mono="true">{{ $coResult['transactionId'] }}</x-detail-row>
+                                        :mono="true">{{ $coResult['approvalId'] ?? '—' }}</x-detail-row>
+                                @else
+                                    <x-detail-row label="ID Transaction"
+                                        :mono="true">{{ $coResult['transactionId'] ?? '—' }}</x-detail-row>
+
+                                    <x-detail-row label="Frais" :mono="true">
+                                        {{ number_format($coResult['feeAmount'] ?? 0, 0, ',', ' ') }} KMF
+                                    </x-detail-row>
+
+                                    <x-detail-row label="Commission" :mono="true">
+                                        <span class="text-app-green">+
+                                            {{ number_format($coResult['commissionAmount'] ?? 0, 0, ',', ' ') }} KMF</span>
+                                    </x-detail-row>
                                 @endif
-
-                                <x-detail-row label="Frais"
-                                    :mono="true">{{ number_format($coResult['feeAmount'], 0, ',', ' ') }}
-                                    KMF</x-detail-row>
-
-                                <x-detail-row label="Commission" :mono="true">
-                                    <span class="text-app-green">+
-                                        {{ number_format($coResult['commissionAmount'], 0, ',', ' ') }} KMF</span>
-                                </x-detail-row>
 
                                 <x-detail-row label="Statut" :border="false">
                                     <x-agent-badge :status="$coResult['status']" />

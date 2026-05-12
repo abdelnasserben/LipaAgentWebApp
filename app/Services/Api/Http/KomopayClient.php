@@ -35,6 +35,24 @@ final class KomopayClient
         return $client;
     }
 
+    /**
+     * Same as request() but without `asJson()` so multipart attachments
+     * can drive the body format (used for KYC document upload).
+     */
+    public function multipartRequest(bool $withAuth = true): PendingRequest
+    {
+        $client = Http::baseUrl((string) config('komopay.base_url'))
+            ->timeout((int) config('komopay.timeout', 15))
+            ->acceptJson();
+
+        $token = $withAuth ? $this->bearerToken() : null;
+        if ($token !== null) {
+            $client = $client->withToken($token);
+        }
+
+        return $client;
+    }
+
     public function get(string $path, array $query = [], array $headers = [], bool $withAuth = true): Response
     {
         return $this->send(

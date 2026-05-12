@@ -7,6 +7,7 @@ namespace App\Livewire\Agent;
 use App\Contracts\Api\TransactionApi;
 use App\Exceptions\ApiException;
 use App\Livewire\Concerns\HandlesApiErrors;
+use Carbon\CarbonImmutable;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -49,10 +50,10 @@ class Statement extends Component
         $this->clearApiError();
 
         try {
-            $result = $transactions->getStatements([
-                'from' => $this->filterFrom,
-                'to'   => $this->filterTo,
-            ]);
+            $result = $transactions->getStatements(array_filter([
+                'from' => $this->toInstant($this->filterFrom, startOfDay: true),
+                'to'   => $this->toInstant($this->filterTo, startOfDay: false),
+            ]));
         } catch (ApiException $exception) {
             $this->entries = [];
             $this->pagination = [];
@@ -84,5 +85,22 @@ class Statement extends Component
     public function render(): \Illuminate\View\View
     {
         return view('livewire.agent.statement');
+    }
+
+    private function toInstant(string $date, bool $startOfDay): ?string
+    {
+        if ($date === '') {
+            return null;
+        }
+
+        try {
+            $carbon = CarbonImmutable::parse($date);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $carbon = $startOfDay ? $carbon->startOfDay() : $carbon->endOfDay();
+
+        return $carbon->utc()->toIso8601ZuluString();
     }
 }

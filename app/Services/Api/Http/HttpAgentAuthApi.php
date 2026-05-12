@@ -42,6 +42,15 @@ final class HttpAgentAuthApi implements AgentAuthApi
         return $this->loginData($response);
     }
 
+    public function logout(): void
+    {
+        try {
+            $this->client->post('/api/v1/auth/agent/logout', [], [], true);
+        } catch (ApiException) {
+            // Swallow — local session is cleared regardless of API outcome.
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */

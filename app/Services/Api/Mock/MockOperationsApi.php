@@ -66,27 +66,37 @@ final class MockOperationsApi implements OperationsApi
     public function processCashOut(array $data): array
     {
         $amount     = (int) ($data['amount'] ?? 0);
+        $pending    = $amount > 100000;
+
+        if ($pending) {
+            // Spec §8.1: PENDING_APPROVAL response carries no transactionId/fees,
+            // only approvalId, requestedAmount, currency and status.
+            return [
+                'status' => 202,
+                'data'   => [
+                    'transactionId'   => null,
+                    'status'          => 'PENDING_APPROVAL',
+                    'approvalId'      => (string) Str::uuid(),
+                    'requestedAmount' => $amount,
+                    'currency'        => 'KMF',
+                ],
+            ];
+        }
+
         $feeAmount  = (int) floor($amount * 0.01);
         $commission = (int) floor($amount * 0.01);
         $net        = $amount - $feeAmount;
-        $pending    = $amount > 100000;
 
-        $response = [
+        return [
             'transactionId'          => (string) Str::uuid(),
-            'status'                 => $pending ? 'PENDING_APPROVAL' : 'COMPLETED',
+            'status'                 => 'COMPLETED',
             'requestedAmount'        => $amount,
             'feeAmount'              => $feeAmount,
             'commissionAmount'       => $commission,
             'netAmountToDestination' => $net,
             'currency'               => 'KMF',
-            'completedAt'            => $pending ? null : now()->toIso8601ZuluString(),
+            'completedAt'            => now()->toIso8601ZuluString(),
             'replayed'               => false,
         ];
-
-        if ($pending) {
-            return ['status' => 202, 'data' => $response];
-        }
-
-        return $response;
     }
 }

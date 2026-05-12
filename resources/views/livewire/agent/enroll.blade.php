@@ -190,9 +190,9 @@
                             <div class="text-xs text-app-muted">Ajoutez les pièces justificatives du client</div>
                         </div>
 
-                        <div class="mb-4 flex gap-2">
+                        <div class="mb-4 grid gap-2 md:grid-cols-[1fr_1fr_auto]">
                             <select wire:model="kycDocType"
-                                class="min-w-0 flex-1 cursor-pointer appearance-none rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 text-[13px] text-app-text outline-none focus:border-app-accent">
+                                class="min-w-0 cursor-pointer appearance-none rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 text-[13px] text-app-text outline-none focus:border-app-accent">
                                 <option value="NATIONAL_ID">Carte Nationale d'Identité</option>
                                 <option value="PASSPORT">Passeport</option>
                                 <option value="PROOF_OF_ADDRESS">Justificatif de domicile</option>
@@ -200,12 +200,19 @@
                                 <option value="OTHER">Autre document</option>
                             </select>
 
+                            <input type="file" wire:model="kycFile" accept="image/*,application/pdf"
+                                class="min-w-0 cursor-pointer rounded-lg border-[1.5px] border-app-border bg-app-surface px-3 py-2.5 text-[12px] text-app-text" />
+
                             <button wire:click="addKycDoc" type="button"
                                 class="flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border-[1.5px] border-app-accent bg-app-accent-bg px-4 py-3 text-[13px] font-bold text-app-accent">
                                 <x-agent-icon name="upload" :size="14" />
                                 Ajouter
                             </button>
                         </div>
+
+                        @error('kycFile')
+                            <p class="mb-3 text-[11px] text-app-red">{{ $message }}</p>
+                        @enderror
 
                         @if(count($kycDocuments) > 0)
                             <div class="mb-4 overflow-hidden rounded-[10px] border border-app-border bg-app-surface">
@@ -233,7 +240,7 @@
                                                 {{ $docLabels[$doc['type']] ?? $doc['type'] }}
                                             </div>
                                             <div class="mt-0.5 truncate font-mono text-[11px] text-app-muted">
-                                                {{ $doc['filename'] }}
+                                                {{ $doc['name'] ?? '—' }}
                                             </div>
                                         </div>
 
@@ -359,10 +366,45 @@
                                         @endforeach
                                     </div>
 
-                                    @if($selectedNfcUid)
-                                        <button type="button"
-                                            class="w-full cursor-pointer rounded-[10px] border-0 bg-app-purple p-3 text-sm font-bold text-white">
-                                            Confirmer la vente
+                                    @if($selectedNfcUid && ! $cardSaleResult)
+                                        <div class="mb-3">
+                                            <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                                Prix de la carte (KMF)
+                                            </label>
+                                            <input type="number" wire:model="cardPrice" min="1" placeholder="0"
+                                                class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-2.5 font-mono text-sm text-app-text outline-none focus:border-app-purple" />
+                                            @error('cardPrice') <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p> @enderror
+                                        </div>
+
+                                        @if($cardSaleError)
+                                            <div class="mb-3 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3 py-2 text-[12px] text-app-red">
+                                                <x-agent-icon name="warning" :size="14" />
+                                                {{ $cardSaleError }}
+                                            </div>
+                                        @endif
+
+                                        <button wire:click="submitCardSale" wire:loading.attr="disabled" type="button"
+                                            class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-purple p-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-70">
+                                            <span wire:loading.remove wire:target="submitCardSale">Confirmer la vente</span>
+                                            <span wire:loading.flex wire:target="submitCardSale" class="hidden items-center gap-2">
+                                                <x-spinner :size="14" />
+                                                Vente en cours…
+                                            </span>
+                                        </button>
+                                    @elseif($cardSaleResult)
+                                        <div class="rounded-[10px] border border-app-green bg-app-green-bg p-3.5 text-[12px] text-app-text">
+                                            <div class="mb-2 flex items-center gap-2 text-app-green">
+                                                <x-agent-icon name="check" :size="14" />
+                                                <span class="text-[12px] font-bold">Carte vendue avec succès</span>
+                                            </div>
+                                            <div class="grid gap-1 font-mono text-[11px] text-app-muted">
+                                                <div>Transaction : <span class="text-app-text">{{ $cardSaleResult['transactionId'] ?? '—' }}</span></div>
+                                                <div>Carte : <span class="text-app-text">{{ $cardSaleResult['cardId'] ?? '—' }}</span></div>
+                                                <div>Prix : <span class="text-app-text">{{ number_format((int) ($cardSaleResult['cardPrice'] ?? 0), 0, ',', ' ') }} KMF</span></div>
+                                                <div>Commission : <span class="text-app-green">+ {{ number_format((int) ($cardSaleResult['commissionAmount'] ?? 0), 0, ',', ' ') }} KMF</span></div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="hidden">
                                         </button>
                                     @endif
                                 </div>

@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Api\Mock;
 
 use App\Contracts\Api\EnrollApi;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 final class MockEnrollApi implements EnrollApi
 {
+    /** @var array<string, array<int, array<string, mixed>>> */
+    private array $store = [];
+
     public function enrollCustomer(array $data): array
     {
         $seq = str_pad((string) random_int(100, 999), 5, '0', STR_PAD_LEFT);
@@ -20,16 +24,27 @@ final class MockEnrollApi implements EnrollApi
         ];
     }
 
-    public function uploadKycDocument(string $customerId, array $data): array
+    public function uploadKycDocument(string $customerId, string $documentType, UploadedFile $file): array
     {
-        return [
-            'id'            => (string) Str::uuid(),
-            'customerId'    => $customerId,
-            'documentType'  => $data['documentType'] ?? 'NATIONAL_ID',
-            'status'        => 'PENDING_REVIEW',
-            'uploadedAt'    => now()->toIso8601ZuluString(),
-            'reviewedAt'    => null,
-            'rejectionNote' => null,
+        $doc = [
+            'id'                  => (string) Str::uuid(),
+            'ownerActorType'      => 'CUSTOMER',
+            'ownerActorId'        => $customerId,
+            'documentType'        => $documentType,
+            'contentHash'         => hash('sha256', $file->getClientOriginalName() . microtime()),
+            'uploadedByActorType' => 'AGENT',
+            'uploadedByActorId'   => 'mock-agent',
+            'uploadedAt'          => now()->toIso8601ZuluString(),
+            'status'              => 'PENDING_REVIEW',
         ];
+
+        $this->store[$customerId][] = $doc;
+
+        return $doc;
+    }
+
+    public function listKycDocuments(string $customerId): array
+    {
+        return $this->store[$customerId] ?? [];
     }
 }

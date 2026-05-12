@@ -52,6 +52,11 @@ final class MockAgentAuthApi implements AgentAuthApi
         ];
     }
 
+    public function logout(): void
+    {
+        // No-op in mock mode.
+    }
+
     public function verifyMfa(string $challengeId, string $code): array
     {
         if ($challengeId === '' || $code !== self::VALID_TOTP) {

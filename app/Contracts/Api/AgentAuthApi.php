@@ -37,4 +37,10 @@ interface AgentAuthApi
      * }
      */
     public function verifyMfa(string $challengeId, string $code): array;
+
+    /**
+     * POST /api/v1/auth/agent/logout — revoke the current access token and active refresh tokens.
+     * Returns 204 No Content. Implementations should swallow auth failures so logout never blocks.
+     */
+    public function logout(): void;
 }
