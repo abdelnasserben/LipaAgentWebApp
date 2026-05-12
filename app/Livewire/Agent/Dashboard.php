@@ -8,6 +8,7 @@ use App\Contracts\Api\AgentApi;
 use App\Contracts\Api\TransactionApi;
 use App\Exceptions\ApiException;
 use App\Livewire\Concerns\HandlesApiErrors;
+use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -22,6 +23,18 @@ class Dashboard extends Component
     public array $balance = [];
     public array $summary = [];
     public array $recentTransactions = [];
+
+    /**
+     * Real per-type totals for today, derived from the transactions list since
+     * the daily-summary endpoint only exposes a global completed amount.
+     *
+     * @var array<string, int>
+     */
+    public array $todayTotalsByType = [
+        'CASH_IN'   => 0,
+        'CASH_OUT'  => 0,
+        'CARD_SALE' => 0,
+    ];
 
     public ?string $apiError = null;
 
@@ -40,7 +53,10 @@ class Dashboard extends Component
             $this->summary = $agent->getDailySummary();
 
             $result = $transactions->getTransactions();
-            $this->recentTransactions = array_slice($result['data'] ?? [], 0, 5);
+            $all = $result['data'] ?? [];
+
+            $this->recentTransactions = array_slice($all, 0, 5);
+            $this->todayTotalsByType = $this->computeTodayTotalsByType($all);
         } catch (ApiException $exception) {
             $this->showApiError($exception);
         }
@@ -70,6 +86,48 @@ class Dashboard extends Component
     public function render(): \Illuminate\View\View
     {
         return view('livewire.agent.dashboard');
+    }
+
+    /**
+     * Sum completed transaction amounts by type, restricted to the current
+     * calendar day. No estimation, no ratio: the absent type stays at 0.
+     *
+     * @param array<int, array<string, mixed>> $transactions
+     * @return array<string, int>
+     */
+    private function computeTodayTotalsByType(array $transactions): array
+    {
+        $totals = [
+            'CASH_IN'   => 0,
+            'CASH_OUT'  => 0,
+            'CARD_SALE' => 0,
+        ];
+
+        $today = Carbon::today();
+
+        foreach ($transactions as $txn) {
+            if (($txn['status'] ?? null) !== 'COMPLETED') {
+                continue;
+            }
+
+            $createdAt = $txn['createdAt'] ?? null;
+            if ($createdAt === null) {
+                continue;
+            }
+
+            if (! Carbon::parse($createdAt)->isSameDay($today)) {
+                continue;
+            }
+
+            $type = $txn['type'] ?? null;
+            if (! is_string($type) || ! array_key_exists($type, $totals)) {
+                continue;
+            }
+
+            $totals[$type] += (int) ($txn['requestedAmount'] ?? 0);
+        }
+
+        return $totals;
     }
 
     /**

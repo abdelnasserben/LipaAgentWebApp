@@ -72,12 +72,14 @@
                 </div>
             @endif
 
-            {{-- Today stats strip --}}
+            {{-- Today stats strip — real totals derived from today's completed
+                 transactions; no estimation, no ratio split. --}}
             <div class="flex gap-0 border-t border-white/[0.08] pt-4">
                 @php
                     $stats = [
-                        ['label' => 'Cash In', 'value' => number_format($summary['totalCompletedAmountToday'] * 0.6, 0, ',', ' ') . ' KMF'],
-                        ['label' => 'Cash Out', 'value' => number_format($summary['totalCompletedAmountToday'] * 0.4, 0, ',', ' ') . ' KMF'],
+                        ['label' => 'Cash In',    'value' => number_format($todayTotalsByType['CASH_IN'] ?? 0, 0, ',', ' ') . ' KMF'],
+                        ['label' => 'Cash Out',   'value' => number_format($todayTotalsByType['CASH_OUT'] ?? 0, 0, ',', ' ') . ' KMF'],
+                        ['label' => 'Ventes carte','value' => number_format($todayTotalsByType['CARD_SALE'] ?? 0, 0, ',', ' ') . ' KMF'],
                         ['label' => 'Opérations', 'value' => $summary['totalCompletedCountToday']],
                         ['label' => 'Commission', 'value' => number_format($summary['commissionEarnedToday'], 0, ',', ' ') . ' KMF'],
                     ];
@@ -85,13 +87,13 @@
 
                 @foreach($stats as $i => $stat)
                     <div @class([
-                        'flex-1 pr-3',
-                        'border-l border-white/[0.08] pl-3' => $i > 0,
+                        'flex-1 pr-2',
+                        'border-l border-white/[0.08] pl-2' => $i > 0,
                     ])>
                         <div class="mb-1 text-[10px] font-medium uppercase tracking-[0.06em] text-white/[0.38]">
                             {{ $stat['label'] }}
                         </div>
-                        <div class="font-mono text-[13px] font-bold tracking-[-0.01em] text-white">
+                        <div class="font-mono text-[12px] font-bold tracking-[-0.01em] text-white">
                             {{ $stat['value'] }}
                         </div>
                     </div>
@@ -161,31 +163,27 @@
         <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
             @forelse($recentTransactions as $txn)
                 @php
-                    $isCashIn = $txn['type'] === 'CASH_IN';
-                    $typeIconClass = $isCashIn ? 'text-app-green' : 'text-app-amber';
-                    $typeBgClass = $isCashIn ? 'bg-app-green-bg' : 'bg-app-amber-bg';
-                    $sign = $isCashIn ? '+' : '−';
-                    $amountClass = $isCashIn ? 'text-app-green' : 'text-app-amber';
+                    $tp = \App\Services\Api\Support\TransactionTypePresenter::for($txn['type'] ?? null);
                 @endphp
 
                 <button wire:click="selectTransaction('{{ $txn['id'] }}')" type="button"
                     class="flex w-full cursor-pointer items-center gap-3 border-0 border-b border-app-border bg-transparent px-4 py-3 text-left hover:bg-app-row-hover">
-                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] {{ $typeBgClass }}">
-                        <x-agent-icon :name="$isCashIn ? 'cash-in' : 'cash-out'" :size="16" class="{{ $typeIconClass }}" />
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] {{ $tp['bg_class'] }}">
+                        <x-agent-icon :name="$tp['icon']" :size="16" :class="$tp['text_class']" />
                     </span>
 
                     <div class="min-w-0 flex-1">
                         <div class="truncate text-[13px] font-semibold text-app-text">
-                            {{ $txn['description'] ?? ($isCashIn ? 'Cash-in client' : 'Cash-out marchand') }}
+                            {{ $txn['description'] ?? $tp['label'] }}
                         </div>
                         <div class="mt-px font-mono text-[11px] text-app-muted">
-                            {{ \Carbon\Carbon::parse($txn['createdAt'])->format('d M, H:i') }}
+                            {{ $tp['label'] }} · {{ \Carbon\Carbon::parse($txn['createdAt'])->format('d M, H:i') }}
                         </div>
                     </div>
 
                     <div class="shrink-0 text-right">
-                        <div class="font-mono text-[13px] font-semibold {{ $amountClass }}">
-                            {{ $sign }}{{ number_format($txn['requestedAmount'], 0, ',', ' ') }}
+                        <div class="font-mono text-[13px] font-semibold {{ $tp['text_class'] }}">
+                            {{ $tp['sign'] }}{{ number_format($txn['requestedAmount'], 0, ',', ' ') }}
                         </div>
                         <x-agent-badge :status="$txn['status']" />
                     </div>

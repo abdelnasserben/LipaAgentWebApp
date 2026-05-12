@@ -23,6 +23,7 @@
                     ['value' => '', 'label' => 'Tous'],
                     ['value' => 'CASH_IN', 'label' => 'Cash In'],
                     ['value' => 'CASH_OUT', 'label' => 'Cash Out'],
+                    ['value' => 'CARD_SALE', 'label' => 'Vente carte'],
                 ];
 
                 $statusChips = [
@@ -100,11 +101,7 @@
             <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
                 @foreach ($group as $txn)
                     @php
-                        $isCashIn = $txn['type'] === 'CASH_IN';
-                        $typeLabel = $isCashIn ? 'Cash In' : 'Cash Out';
-                        $sign = $isCashIn ? '+' : '−';
-                        $typeClass = $isCashIn ? 'text-app-green' : 'text-app-amber';
-                        $typeBgClass = $isCashIn ? 'bg-app-green-bg' : 'bg-app-amber-bg';
+                        $tp = \App\Services\Api\Support\TransactionTypePresenter::for($txn['type'] ?? null);
                     @endphp
 
                     <button wire:click="selectTransaction('{{ $txn['id'] }}')" type="button"
@@ -114,39 +111,25 @@
                         ])>
                         {{-- Icon circle --}}
                         <span
-                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $typeBgClass }}">
-                            @if ($isCashIn)
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
-                                    class="{{ $typeClass }}">
-                                    <path d="M8 12V4M8 4L5 7M8 4l3 3" stroke="currentColor" stroke-width="1.6"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            @else
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
-                                    class="{{ $typeClass }}">
-                                    <path d="M8 4v8M8 12l-3-3M8 12l3-3" stroke="currentColor" stroke-width="1.6"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            @endif
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $tp['bg_class'] }}">
+                            <x-agent-icon :name="$tp['icon']" :size="16" :class="$tp['text_class']" />
                         </span>
 
-                        {{-- Middle: type + description --}}
+                        {{-- Middle: type + status --}}
                         <div class="min-w-0 flex-1">
-                            <div class="text-[13px] font-semibold text-app-text">
-                                {{ $typeLabel }}
+                            <div class="truncate text-[13px] font-semibold text-app-text">
+                                {{ $tp['label'] }}
                             </div>
-                            <div class="mt-0.5 truncate font-mono text-[11px] text-app-muted">
-                                {{ $txn['description'] ?? '—' }}
+
+                            <div class="mt-0.5">
+                                <x-agent-badge :status="$txn['status']" class="text-[10px]" />
                             </div>
                         </div>
 
-                        {{-- Right: amount + status --}}
+                        {{-- Right: amount only --}}
                         <div class="shrink-0 text-right">
-                            <div class="font-mono text-[13px] font-bold {{ $typeClass }}">
-                                {{ $sign }}{{ number_format($txn['requestedAmount'], 0, ',', ' ') }}
-                            </div>
-                            <div class="mt-1">
-                                <x-agent-badge :status="$txn['status']" />
+                            <div class="font-mono text-[13px] font-bold {{ $tp['text_class'] }}">
+                                {{ $tp['sign'] }}{{ number_format($txn['requestedAmount'], 0, ',', ' ') }}
                             </div>
                         </div>
                     </button>
@@ -181,8 +164,8 @@
             <div class="flex-1 overflow-y-auto p-5">
                 @php
                     $txn = $selectedTransaction;
-                    $isCashIn = $txn['type'] === 'CASH_IN';
-                    $heroClass = $isCashIn ? 'text-app-green' : 'text-app-amber';
+                    $tp = \App\Services\Api\Support\TransactionTypePresenter::for($txn['type'] ?? null);
+                    $heroClass = $tp['text_class'];
                 @endphp
 
                 {{-- Hero amount --}}
