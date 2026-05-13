@@ -1,5 +1,9 @@
 <div>
-    <x-api-error-alert :message="$apiError" class="mx-4 mt-4" />
+    @if ($apiError)
+        <x-alert variant="danger" class="mx-4 mt-4" text-class="text-[13px] font-normal leading-relaxed">
+            {{ $apiError }}
+        </x-alert>
+    @endif
 
     {{-- Tab bar --}}
     <div class="border-b-2 border-app-border bg-app-surface">
@@ -34,9 +38,9 @@
 
     <div class="mx-auto max-w-5xl px-4 py-5 md:px-6 md:py-6">
         @if (!$canSellCards)
-            <div class="rounded-xl border border-app-border bg-app-surface p-5 text-[13px] text-app-muted">
+            <x-alert variant="neutral" class="p-5" text-class="text-[13px] font-normal leading-relaxed">
                 Les actions sur les cartes ne sont pas activées pour ce compte Agent.
-            </div>
+            </x-alert>
         @else
             <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
                 <div class="min-w-0 space-y-4">
@@ -55,11 +59,10 @@
                                 </div>
 
                                 @if ($sellError)
-                                    <div
-                                        class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
-                                        <x-agent-icon name="warning" :size="14" />
+                                    <x-alert variant="danger" class="mb-4"
+                                        text-class="text-[13px] font-normal leading-relaxed">
                                         {{ $sellError }}
-                                    </div>
+                                    </x-alert>
                                 @endif
 
                                 <div class="mb-5">
@@ -129,11 +132,10 @@
                                 </div>
 
                                 @if ($sellError)
-                                    <div
-                                        class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
-                                        <x-agent-icon name="warning" :size="14" />
+                                    <x-alert variant="danger" class="mb-4"
+                                        text-class="text-[13px] font-normal leading-relaxed">
                                         {{ $sellError }}
-                                    </div>
+                                    </x-alert>
                                 @endif
 
                                 <div class="mb-4">
@@ -143,10 +145,10 @@
                                     </label>
 
                                     @if (empty($cardStock))
-                                        <div
-                                            class="rounded-lg border border-app-border bg-app-bg px-3.5 py-3 text-xs text-app-muted">
+                                        <x-alert variant="neutral" :icon="false" class="mb-0"
+                                            text-class="text-xs font-normal leading-relaxed">
                                             Aucune carte assignée à votre stock.
-                                        </div>
+                                        </x-alert>
                                     @else
                                         <div class="flex flex-col gap-2">
                                             @foreach ($cardStock as $card)
@@ -216,9 +218,9 @@
 
                             {{-- step: success --}}
                         @else
-                            <div class="rounded-xl border border-app-green bg-app-green-bg p-4 md:p-5">
-                                <div class="mb-3 flex items-center gap-2 text-[13px] font-bold text-app-green">
-                                    <x-agent-icon name="check" :size="16" />
+                            <x-alert variant="success" class="p-4 md:p-5"
+                                text-class="text-[13px] font-normal leading-relaxed">
+                                <div class="mb-3 font-bold text-app-green">
                                     Carte vendue avec succès
                                 </div>
 
@@ -248,7 +250,7 @@
                                         Nouvelle vente
                                     </button>
                                 </div>
-                            </div>
+                            </x-alert>
                         @endif
                     @else
                         {{-- Card lookup (shared by report + replace) --}}
@@ -261,14 +263,13 @@
                             </div>
 
                             @if ($cardLookupError)
-                                <div
-                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
-                                    <x-agent-icon name="warning" :size="14" />
+                                <x-alert variant="danger" class="mb-4"
+                                    text-class="text-[13px] font-normal leading-relaxed">
                                     {{ $cardLookupError }}
-                                </div>
+                                </x-alert>
                             @endif
 
-                            @if (! $lookedUpCard)
+                            @if (!$lookedUpCard)
                                 <div class="mb-3">
                                     <label
                                         class="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
@@ -285,7 +286,8 @@
                                 <div class="flex justify-end">
                                     <button wire:click="lookupCard" wire:loading.attr="disabled" type="button"
                                         class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-48">
-                                        <span wire:loading.remove wire:target="lookupCard" class="flex items-center gap-2">
+                                        <span wire:loading.remove wire:target="lookupCard"
+                                            class="flex items-center gap-2">
                                             <x-agent-icon name="search" :size="16" />
                                             Rechercher
                                         </span>
@@ -372,8 +374,7 @@
 
                                 <div class="flex justify-end">
                                     <button wire:click="reportCard" wire:loading.attr="disabled" type="button"
-                                        @disabled(! $lookedUpCard)
-                                        @class([
+                                        @disabled(!$lookedUpCard) @class([
                                             'flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-52',
                                             'bg-app-red' => $isStolen,
                                             'bg-app-amber' => !$isStolen,
@@ -404,10 +405,10 @@
                                     </label>
 
                                     @if (empty($cardStock))
-                                        <div
-                                            class="rounded-lg border border-app-border bg-app-bg px-3.5 py-2.5 text-xs text-app-muted">
+                                        <x-alert variant="neutral" :icon="false" class="mb-0"
+                                            text-class="text-xs font-normal leading-relaxed">
                                             Aucune carte assignée à votre stock.
-                                        </div>
+                                        </x-alert>
                                     @else
                                         <div class="grid gap-2">
                                             @foreach ($cardStock as $card)
@@ -454,7 +455,7 @@
 
                                 <div class="flex justify-end">
                                     <button wire:click="replaceCard" wire:loading.attr="disabled" type="button"
-                                        @disabled(! $lookedUpCard)
+                                        @disabled(!$lookedUpCard)
                                         class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-52">
                                         <span wire:loading.remove wire:target="replaceCard">Remplacer la carte</span>
                                         <span wire:loading.flex wire:target="replaceCard"
@@ -468,9 +469,9 @@
 
                         {{-- Result --}}
                         @if ($lastResult !== null)
-                            <div class="rounded-xl border border-app-green bg-app-green-bg p-4 md:p-5">
-                                <div class="mb-3 flex items-center gap-2 text-[13px] font-bold text-app-green">
-                                    <x-agent-icon name="check" :size="16" />
+                            <x-alert variant="success" class="p-4 md:p-5"
+                                text-class="text-[13px] font-normal leading-relaxed">
+                                <div class="mb-3 font-bold text-app-green">
                                     Opération effectuée
                                 </div>
 
@@ -511,7 +512,7 @@
                                         Nouvelle opération
                                     </button>
                                 </div>
-                            </div>
+                            </x-alert>
                         @endif
                     @endif {{-- /sell-vs-other tabs --}}
                 </div>
@@ -525,7 +526,8 @@
                     <p class="mb-4 mt-0 text-xs leading-relaxed text-app-muted">
                         Déclarez une carte perdue ou volée, ou remplacez-la avec une carte assignée à votre stock.
                     </p>
-                    <x-alert variant="neutral" :icon="false" class="border-0" text-class="text-xs font-normal leading-relaxed">
+                    <x-alert variant="neutral" :icon="false" class="border-0"
+                        text-class="text-xs font-normal leading-relaxed">
                         Vérifiez toujours l'identité du client avant toute action sur ses cartes.
                     </x-alert>
                 </aside>

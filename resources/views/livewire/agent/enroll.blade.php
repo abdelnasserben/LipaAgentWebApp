@@ -1,5 +1,9 @@
 <div>
-    <x-api-error-alert :message="$apiError" class="mx-4 mt-4" />
+    @if ($apiError)
+        <x-alert variant="danger" class="mx-4 mt-4" text-class="text-[13px] font-normal leading-relaxed">
+            {{ $apiError }}
+        </x-alert>
+    @endif
 
     {{-- Progress stepper --}}
     <div class="border-b border-app-border bg-app-surface">
@@ -121,7 +125,7 @@
                                     Type de pièce d'identité <span class="text-app-red">*</span>
                                 </label>
                                 <select wire:model="nationalIdType"
-                                    class="w-full cursor-pointer appearance-none rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 text-sm text-app-text outline-none focus:border-app-accent">
+                                    class="w-full cursor-pointer rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 text-sm text-app-text outline-none focus:border-app-accent">
                                     <option value="NATIONAL_ID">Carte Nationale d'Identité</option>
                                     <option value="PASSPORT">Passeport</option>
                                     <option value="OTHER">Autre</option>
@@ -197,7 +201,7 @@
 
                         <div class="mb-4 grid gap-2 md:grid-cols-[1fr_1fr_auto]">
                             <select wire:model="kycDocType"
-                                class="min-w-0 cursor-pointer appearance-none rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 text-[13px] text-app-text outline-none focus:border-app-accent">
+                                class="min-w-0 cursor-pointer rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 text-[13px] text-app-text outline-none focus:border-app-accent">
                                 <option value="NATIONAL_ID">Carte Nationale d'Identité</option>
                                 <option value="PASSPORT">Passeport</option>
                                 <option value="PROOF_OF_ADDRESS">Justificatif de domicile</option>
@@ -208,8 +212,12 @@
                             <input type="file" wire:model="kycFile" accept="image/*,application/pdf"
                                 class="min-w-0 cursor-pointer rounded-lg border-[1.5px] border-app-border bg-app-surface px-3 py-2.5 text-[12px] text-app-text" />
 
-                            <button wire:click="addKycDoc" type="button"
-                                class="flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border-[1.5px] border-app-accent bg-app-accent-bg px-4 py-3 text-[13px] font-bold text-app-accent">
+                            <button wire:click="addKycDoc" type="button" @disabled(!$kycFile)
+                                @class([
+                                    'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border-[1.5px] px-4 py-3 text-[13px] font-bold transition-opacity',
+                                    'cursor-pointer border-app-accent bg-app-accent-bg text-app-accent' => $kycFile,
+                                    'cursor-not-allowed border-app-border bg-app-bg text-app-muted opacity-60' => !$kycFile,
+                                ])>
                                 <x-agent-icon name="upload" :size="14" />
                                 Ajouter
                             </button>
@@ -260,20 +268,15 @@
                                 @endforeach
                             </div>
                         @else
-                            <div
-                                class="mb-4 rounded-[10px] border border-dashed border-app-border bg-app-bg p-8 text-center">
-                                <div class="text-xs text-app-muted">Aucun document ajouté</div>
-                            </div>
+                            <x-alert variant="neutral" :icon="false" class="mb-4 border-dashed p-8 text-center"
+                                text-class="text-xs font-normal leading-relaxed">
+                                Aucun document ajouté
+                            </x-alert>
                         @endif
 
-                        <div
-                            class="mb-5 flex items-center gap-2 rounded-lg border border-app-amber bg-app-amber-bg px-3.5 py-2.5 text-app-amber">
-                            <x-agent-icon name="warning" :size="14" />
-                            <span class="text-xs font-medium">
-                                Vous pouvez continuer sans ajouter de documents — ils peuvent être fournis
-                                ultérieurement
-                            </span>
-                        </div>
+                        <x-alert variant="warning" class="mb-5" text-class="text-xs font-medium leading-relaxed">
+                            Vous pouvez continuer sans ajouter de documents — ils peuvent être fournis ultérieurement
+                        </x-alert>
 
                         <div class="grid grid-cols-[1fr_2fr] gap-2.5 md:flex md:justify-end">
                             <button wire:click="goToStep(2)" type="button"
@@ -400,11 +403,10 @@
                                         </div>
 
                                         @if ($cardSaleError)
-                                            <div
-                                                class="mb-3 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3 py-2 text-[12px] text-app-red">
-                                                <x-agent-icon name="warning" :size="14" />
+                                            <x-alert variant="danger" class="mb-3"
+                                                text-class="text-[12px] font-normal leading-relaxed">
                                                 {{ $cardSaleError }}
-                                            </div>
+                                            </x-alert>
                                         @endif
 
                                         <button wire:click="submitCardSale" wire:loading.attr="disabled"
@@ -419,27 +421,39 @@
                                             </span>
                                         </button>
                                     @elseif($cardSaleResult)
-                                        <div
-                                            class="rounded-[10px] border border-app-green bg-app-green-bg p-3.5 text-[12px] text-app-text">
-                                            <div class="mb-2 flex items-center gap-2 text-app-green">
-                                                <x-agent-icon name="check" :size="14" />
-                                                <span class="text-[12px] font-bold">Carte vendue avec succès</span>
+                                        <x-alert variant="success" class="p-3.5"
+                                            text-class="text-[12px] font-normal leading-relaxed">
+                                            <div class="mb-2 font-bold text-app-green">
+                                                Carte vendue avec succès
                                             </div>
                                             <div class="grid gap-1 font-mono text-[11px] text-app-muted">
-                                                <div>Transaction : <span
+                                                <div>
+                                                    Transaction :
+                                                    <span
                                                         class="text-app-text">{{ $cardSaleResult['transactionId'] ?? '—' }}</span>
                                                 </div>
-                                                <div>Carte : <span
+                                                <div>
+                                                    Carte :
+                                                    <span
                                                         class="text-app-text">{{ $cardSaleResult['cardId'] ?? '—' }}</span>
                                                 </div>
-                                                <div>Prix : <span
-                                                        class="text-app-text">{{ number_format((int) ($cardSaleResult['cardPrice'] ?? 0), 0, ',', ' ') }}
-                                                        KMF</span></div>
-                                                <div>Commission : <span class="text-app-green">+
+                                                <div>
+                                                    Prix :
+                                                    <span class="text-app-text">
+                                                        {{ number_format((int) ($cardSaleResult['cardPrice'] ?? 0), 0, ',', ' ') }}
+                                                        KMF
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    Commission :
+                                                    <span class="text-app-green">
+                                                        +
                                                         {{ number_format((int) ($cardSaleResult['commissionAmount'] ?? 0), 0, ',', ' ') }}
-                                                        KMF</span></div>
+                                                        KMF
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </x-alert>
                                         <button type="button" class="hidden">
                                         </button>
                                     @endif
@@ -515,8 +529,10 @@
                         @endforeach
                     </div>
 
-                    <x-alert variant="neutral" :icon="false" class="mt-5 border-0" text-class="text-xs font-normal">
-                       Les champs marqués d’un astérisque sont obligatoires. Il est préférable de renseigner tous les champs.
+                    <x-alert variant="neutral" :icon="false" class="mt-5 border-0"
+                        text-class="text-xs font-normal">
+                        Les champs marqués d’un astérisque sont obligatoires. Il est préférable de renseigner tous les
+                        champs.
                     </x-alert>
                 </aside>
             @endif

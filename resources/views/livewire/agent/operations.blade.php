@@ -39,17 +39,19 @@
                     @if ($ciStep === 'lookup')
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
                             <div class="mb-5">
-                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">Rechercher un client
+                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">
+                                    Rechercher un client
                                 </div>
-                                <div class="text-xs text-app-muted">Entrez le numéro de téléphone du client</div>
+                                <div class="text-xs text-app-muted">
+                                    Entrez le numéro de téléphone du client
+                                </div>
                             </div>
 
                             @if ($ciError)
-                                <div
-                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
-                                    <x-agent-icon name="warning" :size="14" />
+                                <x-alert variant="danger" class="mb-4"
+                                    text-class="text-[13px] font-normal leading-relaxed">
                                     {{ $ciError }}
-                                </div>
+                                </x-alert>
                             @endif
 
                             <div class="mb-5">
@@ -91,12 +93,16 @@
                     @elseif($ciStep === 'confirm')
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
                             <div class="mb-5">
-                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">Confirmer le client
+                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">
+                                    Confirmer le client
                                 </div>
-                                <div class="text-xs text-app-muted">Vérifiez les informations avant de continuer</div>
+                                <div class="text-xs text-app-muted">
+                                    Vérifiez les informations avant de continuer
+                                </div>
                             </div>
 
-                            <div class="mb-5 flex items-start gap-3.5 rounded-xl border-[1.5px] border-app-border bg-app-bg p-5">
+                            <div
+                                class="mb-5 flex items-start gap-3.5 rounded-xl border-[1.5px] border-app-border bg-app-bg p-5">
                                 <div
                                     class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-app-accent-bg text-xl font-extrabold text-app-accent">
                                     {{ mb_strtoupper(mb_substr($ciCustomer['fullName'], 0, 1)) }}
@@ -148,7 +154,8 @@
 
                                 <div class="min-w-0">
                                     <div class="truncate text-[13px] font-bold text-app-text">
-                                        {{ $ciCustomer['fullName'] }}</div>
+                                        {{ $ciCustomer['fullName'] }}
+                                    </div>
                                     <div class="font-mono text-[11px] text-app-muted">
                                         +{{ $ciCustomer['phoneCountryCode'] }} {{ $ciCustomer['phoneNumber'] }}
                                     </div>
@@ -164,11 +171,10 @@
                             </div>
 
                             @if ($ciError)
-                                <div
-                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
-                                    <x-agent-icon name="warning" :size="14" />
+                                <x-alert variant="danger" class="mb-4"
+                                    text-class="text-[13px] font-normal leading-relaxed">
                                     {{ $ciError }}
-                                </div>
+                                </x-alert>
                             @endif
 
                             <div>
@@ -203,9 +209,11 @@
                                 </div>
 
                                 @if ((int) $ciAmount > 0)
-                                    <div class="rounded-[10px] border border-app-border bg-app-bg px-3.5 py-2.5 text-[11px] text-app-muted">
-                                        Des frais et une commission peuvent s'appliquer. Les montants définitifs seront affichés après confirmation.
-                                    </div>
+                                    <x-alert variant="neutral" :icon="false" class="mb-0"
+                                        text-class="text-[11px] font-normal leading-relaxed">
+                                        Des frais et une commission peuvent s'appliquer. Les montants définitifs seront
+                                        affichés après confirmation.
+                                    </x-alert>
                                 @endif
                             </div>
 
@@ -238,9 +246,11 @@
                                 </svg>
                             </div>
 
-                            <div class="mb-1 text-[22px] font-extrabold tracking-[-0.02em] text-app-text">Cash-in
-                                réussi !</div>
-                            <div class="mb-6 text-[13px] text-app-muted">La transaction a été effectuée avec succès
+                            <div class="mb-1 text-[22px] font-extrabold tracking-[-0.02em] text-app-text">
+                                Cash-in réussi !
+                            </div>
+                            <div class="mb-6 text-[13px] text-app-muted">
+                                La transaction a été effectuée avec succès
                             </div>
 
                             <div
@@ -306,17 +316,19 @@
                     @if ($coStep === 'lookup')
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
                             <div class="mb-5">
-                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">Rechercher un marchand
+                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">
+                                    Rechercher un marchand
                                 </div>
-                                <div class="text-xs text-app-muted">Entrez le numéro de téléphone du marchand</div>
+                                <div class="text-xs text-app-muted">
+                                    Entrez le numéro de téléphone du marchand
+                                </div>
                             </div>
 
                             @if ($coError)
-                                <div
-                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
-                                    <x-agent-icon name="warning" :size="14" />
+                                <x-alert variant="danger" class="mb-4"
+                                    text-class="text-[13px] font-normal leading-relaxed">
                                     {{ $coError }}
-                                </div>
+                                </x-alert>
                             @endif
 
                             <div class="mb-5">
@@ -357,7 +369,7 @@
                             </div>
                         </div>
 
-                        {{-- amount step (merchant confirmed) --}}
+                        {{-- amount step --}}
                     @elseif($coStep === 'amount')
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
                             <div
@@ -373,7 +385,8 @@
                                     </div>
                                     <div class="mt-0.5 font-mono text-[12px] text-app-muted">
                                         {{ $coMerchant['externalRef'] ?? '—' }} •
-                                        +{{ $coMerchant['phoneCountryCode'] ?? '' }} {{ $coMerchant['phoneNumber'] ?? '' }}
+                                        +{{ $coMerchant['phoneCountryCode'] ?? '' }}
+                                        {{ $coMerchant['phoneNumber'] ?? '' }}
                                     </div>
                                     <div class="mt-1.5 flex flex-wrap gap-1.5">
                                         <x-agent-badge :status="$coMerchant['status'] ?? 'ACTIVE'" />
@@ -388,11 +401,10 @@
                             </div>
 
                             @if ($coError)
-                                <div
-                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
-                                    <x-agent-icon name="warning" :size="14" />
+                                <x-alert variant="danger" class="mb-4"
+                                    text-class="text-[13px] font-normal leading-relaxed">
                                     {{ $coError }}
-                                </div>
+                                </x-alert>
                             @endif
 
                             <div>
@@ -428,7 +440,8 @@
                                 @enderror
                             </div>
 
-                            <x-alert variant="warning" class="my-5" text-class="text-xs font-medium">
+                            <x-alert variant="warning" class="my-5"
+                                text-class="text-xs font-medium leading-relaxed">
                                 Une validation backoffice peut être requise
                             </x-alert>
 
@@ -459,17 +472,19 @@
                             </button>
 
                             <div class="mb-5">
-                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">Confirmer le
-                                    Cash-out</div>
-                                <div class="text-xs text-app-muted">Vérifiez les détails avant de valider</div>
+                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">
+                                    Confirmer le Cash-out
+                                </div>
+                                <div class="text-xs text-app-muted">
+                                    Vérifiez les détails avant de valider
+                                </div>
                             </div>
 
                             @if ($coError)
-                                <div
-                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
-                                    <x-agent-icon name="warning" :size="14" />
+                                <x-alert variant="danger" class="mb-4"
+                                    text-class="text-[13px] font-normal leading-relaxed">
                                     {{ $coError }}
-                                </div>
+                                </x-alert>
                             @endif
 
                             <div
@@ -488,7 +503,8 @@
                                     </div>
                                     <div class="font-mono text-[11px] text-app-muted">
                                         {{ $coMerchant['externalRef'] ?? '' }} •
-                                        +{{ $coMerchant['phoneCountryCode'] ?? '' }} {{ $coMerchant['phoneNumber'] ?? '' }}
+                                        +{{ $coMerchant['phoneCountryCode'] ?? '' }}
+                                        {{ $coMerchant['phoneNumber'] ?? '' }}
                                     </div>
                                 </div>
 
@@ -509,18 +525,18 @@
                                     </div>
                                 </div>
 
-                                <div class="mt-3 border-t border-app-border pt-3 text-center text-[11px] text-app-muted">
-                                    Des frais et une commission peuvent s'appliquer. Le détail définitif sera affiché après confirmation.
+                                <div
+                                    class="mt-3 border-t border-app-border pt-3 text-center text-[11px] text-app-muted">
+                                    Des frais et une commission peuvent s'appliquer. Le détail définitif sera affiché
+                                    après confirmation.
                                 </div>
                             </div>
 
                             @if ((int) $coAmount > 100000)
-                                <div
-                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-amber bg-app-amber-bg px-3.5 py-2.5 text-app-amber">
-                                    <x-agent-icon name="warning" :size="14" />
-                                    <span class="text-xs font-medium">Ce montant nécessitera une approbation
-                                        backoffice</span>
-                                </div>
+                                <x-alert variant="warning" class="mb-4"
+                                    text-class="text-xs font-medium leading-relaxed">
+                                    Ce montant nécessitera une approbation backoffice
+                                </x-alert>
                             @endif
 
                             <div class="grid gap-2.5 md:flex md:justify-end">
@@ -557,19 +573,23 @@
                                             stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                 </div>
-                                <div class="mb-1 text-[22px] font-extrabold tracking-[-0.02em] text-app-green">Cash-out
-                                    effectué !</div>
-                                <div class="mb-6 text-[13px] text-app-muted">La transaction a été effectuée avec succès
+                                <div class="mb-1 text-[22px] font-extrabold tracking-[-0.02em] text-app-green">
+                                    Cash-out effectué !
+                                </div>
+                                <div class="mb-6 text-[13px] text-app-muted">
+                                    La transaction a été effectuée avec succès
                                 </div>
                             @else
                                 <div
                                     class="mx-auto mb-5 flex h-[72px] w-[72px] items-center justify-center rounded-full border-2 border-app-amber bg-app-amber-bg text-app-amber">
                                     <x-agent-icon name="warning" :size="30" />
                                 </div>
-                                <div class="mb-1 text-[22px] font-extrabold tracking-[-0.02em] text-app-amber">En
-                                    attente d'approbation</div>
-                                <div class="mb-6 text-[13px] text-app-muted">Ce montant nécessite une validation
-                                    backoffice</div>
+                                <div class="mb-1 text-[22px] font-extrabold tracking-[-0.02em] text-app-amber">
+                                    En attente d'approbation
+                                </div>
+                                <div class="mb-6 text-[13px] text-app-muted">
+                                    Ce montant nécessite une validation backoffice
+                                </div>
                             @endif
 
                             <div @class([
