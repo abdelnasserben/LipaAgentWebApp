@@ -91,7 +91,7 @@
                 </span>
             </button>
         </form>
-    @else
+    @elseif($step === 'mfa')
         <div>
             <div class="mb-7 flex items-center gap-2.5">
                 <button
@@ -151,6 +151,91 @@
                     <span wire:loading.flex wire:target="verifyMfa" class="hidden items-center gap-2">
                         <x-spinner :size="16" />
                         Verification...
+                    </span>
+                </button>
+            </form>
+        </div>
+    @else
+        <div>
+            <div class="mb-7 flex items-center gap-2.5">
+                <button
+                    wire:click="back"
+                    type="button"
+                    class="flex cursor-pointer rounded-md border-0 bg-transparent p-1 text-app-muted"
+                    aria-label="Retour"
+                >
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M12.5 5L7.5 10l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+
+                <div>
+                    <div class="text-[15px] font-bold text-app-text">
+                        Definir votre PIN
+                    </div>
+                    <div class="mt-0.5 text-xs text-app-muted">
+                        Choisissez un PIN Agent de 4 a 8 chiffres
+                    </div>
+                </div>
+            </div>
+
+            <form wire:submit="setupPin">
+                <div class="mb-5">
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
+                        Nouveau PIN
+                    </label>
+
+                    <input
+                        type="password"
+                        wire:model="newPin"
+                        inputmode="numeric"
+                        pattern="\d*"
+                        maxlength="8"
+                        autocomplete="new-password"
+                        placeholder="4 a 8 chiffres"
+                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base text-app-text outline-none focus:border-app-accent"
+                    />
+
+                    @error('newPin')
+                        <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="mb-6">
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
+                        Confirmer le PIN
+                    </label>
+
+                    <input
+                        type="password"
+                        wire:model="confirmPin"
+                        inputmode="numeric"
+                        pattern="\d*"
+                        maxlength="8"
+                        autocomplete="new-password"
+                        placeholder="Saisissez a nouveau le PIN"
+                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base text-app-text outline-none focus:border-app-accent"
+                    />
+
+                    @error('confirmPin')
+                        <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                    @enderror
+
+                    <p class="mt-2 text-[11px] text-app-muted">
+                        Lien de definition valable 10 minutes. Le PIN ne doit jamais etre partage.
+                    </p>
+                </div>
+
+                <button
+                    type="submit"
+                    wire:loading.attr="disabled"
+                    wire:target="setupPin"
+                    class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                    <span wire:loading.remove wire:target="setupPin">Definir le PIN</span>
+                    <span wire:loading.flex wire:target="setupPin" class="hidden items-center gap-2">
+                        <x-spinner :size="16" />
+                        Enregistrement...
                     </span>
                 </button>
             </form>

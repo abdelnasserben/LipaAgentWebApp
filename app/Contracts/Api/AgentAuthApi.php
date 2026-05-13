@@ -11,6 +11,9 @@ interface AgentAuthApi
      *
      * @return array{
      *     mfaRequired: bool,
+     *     pinSetupRequired?: bool,
+     *     pinSetupToken?: string,
+     *     pinSetupTokenExpiresAt?: string,
      *     challengeId?: string,
      *     mfaFactor?: string,
      *     tokens?: array{
@@ -22,6 +25,13 @@ interface AgentAuthApi
      * }
      */
     public function login(string $phoneCountryCode, string $phoneNumber, string $pin): array;
+
+    /**
+     * POST /api/v1/auth/agent/auth-pin/setup — consume the single-use `pinSetupToken`
+     * returned by login when `pinSetupRequired=true` to define the initial Agent PIN.
+     * Returns 204 No Content.
+     */
+    public function setupAuthPin(string $pinSetupToken, string $pin): void;
 
     /**
      * Verify the TOTP challenge returned by the PIN-first login flow.

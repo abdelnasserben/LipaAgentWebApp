@@ -17,6 +17,8 @@ final class MockAgentAuthApi implements AgentAuthApi
 
     private const VALID_TOTP = '123456';
 
+    private const PIN_SETUP_TOKEN = 'mock-agent-pin-setup-token';
+
     public function login(string $phoneCountryCode, string $phoneNumber, string $pin): array
     {
         $profile = FixtureLoader::load('agent/profile');
@@ -27,7 +29,12 @@ final class MockAgentAuthApi implements AgentAuthApi
         }
 
         if ($pin === '9999') {
-            throw new AgentAuthException('AUTH_PIN_NOT_SET', 422);
+            return [
+                'mfaRequired' => false,
+                'pinSetupRequired' => true,
+                'pinSetupToken' => self::PIN_SETUP_TOKEN,
+                'pinSetupTokenExpiresAt' => now()->addMinutes(10)->toIso8601ZuluString(),
+            ];
         }
 
         if ($pin === '0000') {
@@ -50,6 +57,17 @@ final class MockAgentAuthApi implements AgentAuthApi
             'mfaRequired' => false,
             'tokens' => $this->tokens(),
         ];
+    }
+
+    public function setupAuthPin(string $pinSetupToken, string $pin): void
+    {
+        if ($pinSetupToken !== self::PIN_SETUP_TOKEN) {
+            throw new AgentAuthException('AUTH_INVALID_TOKEN', 401);
+        }
+
+        if (preg_match('/^\d{4,8}$/', $pin) !== 1) {
+            throw new AgentAuthException('AUTH_PIN_FORMAT', 422);
+        }
     }
 
     public function logout(): void

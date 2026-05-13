@@ -29,6 +29,7 @@ final class ApiErrorMessage
             'AUTH_PIN_ALREADY_SET' => 'Un PIN Agent est deja configure pour ce compte.',
             'AUTH_PIN_FORMAT' => 'Le format du PIN Agent est invalide.',
             'AUTH_PIN_INVALID' => 'PIN Agent invalide.',
+            'AUTH_INVALID_TOKEN' => 'Lien de definition de PIN expire ou invalide. Reconnectez-vous pour recommencer.',
             'MFA_REQUIRED' => 'Code TOTP requis pour terminer la connexion.',
             'MFA_INVALID' => 'Code TOTP invalide ou expire.',
             'LEGACY_OTP_LOGIN_REMOVED' => "L'ancien login SMS OTP n'est plus disponible. Utilisez telephone et PIN.",

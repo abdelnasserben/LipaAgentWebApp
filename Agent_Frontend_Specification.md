@@ -148,13 +148,30 @@ Response `200 ApiResponse<LoginResponse>` when TOTP MFA is required:
 ```json
 {
   "data": {
-    "mfaRequired": true,
+    "mfaRequired": false,
+    "pinSetupRequired": false,
     "challengeId": "uuid",
     "mfaFactor": "TOTP"
   },
   "timestamp": "2026-05-12T12:00:00Z"
 }
 ```
+
+Response `200 ApiResponse<LoginResponse>` when the Agent has no PIN yet (created by Backoffice without an initial PIN, or after a Backoffice forced reset):
+
+```json
+{
+  "data": {
+    "mfaRequired": false,
+    "pinSetupRequired": true,
+    "pinSetupToken": "jwt-purpose-PIN_SETUP",
+    "pinSetupTokenExpiresAt": "2026-05-12T12:10:00Z"
+  },
+  "timestamp": "2026-05-12T12:00:00Z"
+}
+```
+
+The client must store the `pinSetupToken` (10 min TTL, single-use) and immediately call `POST /api/v1/auth/agent/auth-pin/setup` with it to define the initial PIN. No full session is issued on this branch; the submitted `pin` field on the login request is ignored when the actor has no configured PIN.
 
 Token lifetimes from `application.yml`:
 
@@ -166,7 +183,7 @@ Login lockout:
 
 - 3 failed auth-PIN checks lock the auth PIN for 15 minutes.
 - `PENDING_KYC`, `SUSPENDED`, and `CLOSED` agents cannot obtain tokens.
-- An Agent without an auth PIN receives `AUTH_PIN_NOT_SET` from the PIN-first login flow.
+- An Agent without an auth PIN never receives a full session: the login response is `pinSetupRequired=true` and carries a short-lived `pinSetupToken`.
 
 ### 3.2 MFA Verification
 
@@ -250,17 +267,19 @@ Agent JWTs do not carry `perms`, `brole`, `mid`, or `tid` claims.
 
 ### 3.6 Auth PIN Management
 
-Agent auth PIN endpoints require an existing Agent JWT:
+Two distinct endpoints, distinguished by the bearer they require:
 
-- `POST /api/v1/auth/agent/auth-pin`
-- `PUT /api/v1/auth/agent/auth-pin`
+- `POST /api/v1/auth/agent/auth-pin/setup` — accepts the short-lived `pinSetupToken` returned by `POST /login` when `pinSetupRequired=true`. Public route in the security config; the controller still verifies the bearer purpose (`PIN_SETUP`). The token is revoked on success so it cannot be reused.
+- `PUT /api/v1/auth/agent/auth-pin` — requires an existing full-session Agent JWT. Used by an already-logged-in Agent to rotate their PIN; rejected with `AUTH_PIN_INVALID` (and a failed-attempt increment) when `currentPin` is wrong.
 
 PIN rules:
 
 - PIN format is 4 to 8 digits.
-- Initial set is rejected if a PIN already exists.
+- Agents are created by Backoffice with no PIN. The first valid call is `/auth-pin/setup` after a `pinSetupRequired` login.
+- The setup endpoint is rejected with `AUTH_PIN_ALREADY_SET` if a PIN already exists — in that case the Agent must use the change-PIN flow.
 - Change requires `currentPin`; wrong current PIN counts toward the 3-failure, 15-minute lockout policy.
-- PIN hashes are stored server-side with BCrypt.
+- PIN hashes are stored server-side with BCrypt (cost 12). The clear PIN is never logged or transmitted back.
+- Forgotten-PIN self-service is not implemented. An Agent who has lost their PIN must contact Backoffice for a forced reset (`POST /api/v1/backoffice/agents/{id}/auth-pin/reset`), which clears the PIN state and returns the Agent to the `pinSetupRequired` branch at next login.
 
 ### 3.7 TOTP Enrollment
 
@@ -321,13 +340,13 @@ Dev behavior:
 
 | Method | Path | Auth | Headers | Query | Request | Response | Primary errors | Frontend notes |
 |---|---|---|---|---|---|---|---|---|
-| POST | `/api/v1/auth/agent/login` | Public | none | none | `LoginRequest` | `200 ApiResponse<LoginResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `401 INVALID_CREDENTIALS`, `422 AUTH_PIN_NOT_SET`, `422 AUTH_PIN_LOCKED`, `422 ACTOR_PENDING_KYC`, `422 ACTOR_SUSPENDED`, `422 ACTOR_CLOSED`, `429 TERMINAL_RATE_LIMIT` | If `mfaRequired=true`, call `/login/verify-mfa`; otherwise store `tokens`. |
+| POST | `/api/v1/auth/agent/login` | Public | none | none | `LoginRequest` | `200 ApiResponse<LoginResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `401 INVALID_CREDENTIALS`, `422 AUTH_PIN_LOCKED`, `422 ACTOR_PENDING_KYC`, `422 ACTOR_SUSPENDED`, `422 ACTOR_CLOSED`, `429 TERMINAL_RATE_LIMIT` | If `pinSetupRequired=true`, call `/auth-pin/setup` with `pinSetupToken`. Else if `mfaRequired=true`, call `/login/verify-mfa`. Otherwise store `tokens`. |
 | POST | `/api/v1/auth/agent/login/verify-mfa` | Public | none | none | `VerifyMfaRequest` | `200 ApiResponse<LoginResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `401 MFA_INVALID`, `401 INVALID_CREDENTIALS`, `422 ACTOR_PENDING_KYC`, `422 ACTOR_SUSPENDED`, `422 ACTOR_CLOSED`, `429 TERMINAL_RATE_LIMIT` | Only valid after a login response with `mfaRequired=true`. |
 | POST | `/api/v1/auth/agent/otp-request` | Public, deprecated | none | none | `AgentOtpRequest` | `200 ApiResponse<AgentOtpResponse>` or `410` | `410 LEGACY_OTP_LOGIN_REMOVED`, `401 INVALID_CREDENTIALS`, `422 ACTOR_PENDING_KYC`, `422 ACTOR_SUSPENDED`, `422 ACTOR_CLOSED`, `429 TERMINAL_RATE_LIMIT` | Default production config disables this endpoint. |
 | POST | `/api/v1/auth/agent/otp-verify` | Public, deprecated | none | none | `AgentOtpVerifyRequest` | `200 ApiResponse<TokenResponse>` or `410` | `410 LEGACY_OTP_LOGIN_REMOVED`, `401 MFA_INVALID`, `401 INVALID_CREDENTIALS`, `429 TERMINAL_RATE_LIMIT` | Use only if legacy OTP is enabled by backend config. |
 | POST | `/api/v1/auth/agent/refresh` | Public | none | none | `RefreshTokenRequest` | `200 ApiResponse<TokenResponse>` | `401 REFRESH_TOKEN_INVALID`, `401 INVALID_CREDENTIALS`, `422 ACTOR_PENDING_KYC`, `422 ACTOR_SUSPENDED`, `422 ACTOR_CLOSED`, `429 TERMINAL_RATE_LIMIT` | Replace the stored refresh token with the returned one. |
 | POST | `/api/v1/auth/agent/logout` | Agent JWT | `Authorization` | none | none | `204 No Content` | `401 UNAUTHORIZED`, `401 TOKEN_EXPIRED`, `401 TOKEN_REVOKED`, `403 FORBIDDEN` | Clear local tokens after a successful call. |
-| POST | `/api/v1/auth/agent/auth-pin` | Agent JWT | `Authorization` | none | `SetAuthPinRequest` | `204 No Content` | `400 VALIDATION_FIELD_REQUIRED`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `422 AUTH_PIN_ALREADY_SET`, `422 AUTH_PIN_FORMAT` | Only for actors with no auth PIN yet. |
+| POST | `/api/v1/auth/agent/auth-pin/setup` | PIN_SETUP JWT | `Authorization` | none | `SetAuthPinRequest` | `204 No Content` | `400 VALIDATION_FIELD_REQUIRED`, `401 AUTH_INVALID_TOKEN`, `401 UNAUTHORIZED`, `422 AUTH_PIN_ALREADY_SET`, `422 AUTH_PIN_FORMAT` | Consumes the single-use `pinSetupToken` from a `pinSetupRequired` login response. |
 | PUT | `/api/v1/auth/agent/auth-pin` | Agent JWT | `Authorization` | none | `ChangeAuthPinRequest` | `204 No Content` | `400 VALIDATION_FIELD_REQUIRED`, `401 AUTH_PIN_INVALID`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `422 AUTH_PIN_NOT_SET`, `422 AUTH_PIN_LOCKED`, `422 AUTH_PIN_FORMAT` | Requires the current PIN and the new PIN. |
 | POST | `/api/v1/auth/agent/totp-setup` | Agent JWT | `Authorization` | none | none | `200 ApiResponse<TotpSetupResponse>` | `401 UNAUTHORIZED`, `403 FORBIDDEN` | Display `qrUri` as a QR code; treat `secret` as sensitive. |
 | POST | `/api/v1/auth/agent/totp-confirm` | Agent JWT | `Authorization` | none | `TotpConfirmRequest` | `204 No Content` | `400 VALIDATION_FIELD_REQUIRED`, `401 MFA_INVALID`, `401 UNAUTHORIZED`, `403 FORBIDDEN` | Confirms the pending secret returned by setup. |
@@ -902,9 +921,11 @@ MFA/TOTP flow:
 
 PIN management flow:
 
-- `POST /api/v1/auth/agent/auth-pin` sets the initial PIN and requires an existing Agent JWT.
-- `PUT /api/v1/auth/agent/auth-pin` changes the PIN and requires `currentPin`.
-- PIN-first login returns `AUTH_PIN_NOT_SET` when no PIN exists.
+- Agents are created by Backoffice with no PIN; there is no default or temporary PIN.
+- `POST /api/v1/auth/agent/login` returns `pinSetupRequired=true` together with a single-use `pinSetupToken` (10 min) when no PIN is configured.
+- `POST /api/v1/auth/agent/auth-pin/setup` consumes that token and stores the chosen PIN. No full session is issued until this step succeeds.
+- `PUT /api/v1/auth/agent/auth-pin` changes the PIN for an already-logged-in Agent and requires `currentPin`.
+- A Backoffice-initiated forced reset (`POST /api/v1/backoffice/agents/{id}/auth-pin/reset`) returns the Agent to the `pinSetupRequired` state at next login.
 - Legacy OTP can issue tokens only when backend config enables legacy OTP.
 
 Cash-in flow:

@@ -18,7 +18,7 @@ class Login extends Component
 {
     use HandlesApiErrors;
 
-    public string $step = 'credentials'; // credentials | mfa
+    public string $step = 'credentials'; // credentials | mfa | pin-setup
 
     public string $phoneCountryCode = '269';
 
@@ -30,7 +30,18 @@ class Login extends Component
 
     public string $totpCode = '';
 
+    public string $newPin = '';
+
+    public string $confirmPin = '';
+
     public ?string $error = null;
+
+    /**
+     * Short-lived PIN_SETUP bearer token returned by the login response when
+     * the Agent has no PIN yet. Kept only in Livewire state — never written
+     * to the session as a normal access token.
+     */
+    public string $pinSetupToken = '';
 
     public function mount(): void
     {
@@ -60,6 +71,12 @@ class Login extends Component
             return;
         }
 
+        if (($result['pinSetupRequired'] ?? false) === true) {
+            $this->startPinSetupStep($result);
+
+            return;
+        }
+
         if (($result['mfaRequired'] ?? false) === true) {
             session(['agent_totp_enrolled' => true]);
             $this->startMfaStep($result);
@@ -69,6 +86,54 @@ class Login extends Component
 
         session(['agent_totp_enrolled' => false]);
         $this->completeLogin($result);
+    }
+
+    public function setupPin(AgentAuthApi $auth): void
+    {
+        if ($this->pinSetupToken === '') {
+            $this->error = 'Session de definition de PIN expiree. Reconnectez-vous.';
+            $this->restartFromCredentials();
+
+            return;
+        }
+
+        $this->newPin = trim($this->newPin);
+        $this->confirmPin = trim($this->confirmPin);
+
+        $this->validate([
+            'newPin' => 'required|regex:/^\d{4,8}$/',
+            'confirmPin' => 'required|regex:/^\d{4,8}$/',
+        ], $this->validationMessages());
+
+        if ($this->newPin !== $this->confirmPin) {
+            $this->addError('confirmPin', 'Le PIN et sa confirmation ne correspondent pas.');
+
+            return;
+        }
+
+        $this->error = null;
+
+        try {
+            $auth->setupAuthPin($this->pinSetupToken, $this->newPin);
+        } catch (ApiException $exception) {
+            if (in_array($exception->apiCode(), ['AUTH_INVALID_TOKEN', 'UNAUTHORIZED', 'TOKEN_EXPIRED', 'TOKEN_REVOKED'], true)) {
+                $this->error = 'Lien de definition de PIN expire. Reconnectez-vous pour recommencer.';
+                $this->restartFromCredentials();
+
+                return;
+            }
+
+            $this->showApiError($exception, 'error');
+            $this->newPin = '';
+            $this->confirmPin = '';
+
+            return;
+        }
+
+        // PIN set successfully — return Agent to the login screen to sign in with the new PIN.
+        $this->restartFromCredentials();
+        session()->flash('api_error', 'PIN Agent defini avec succes. Connectez-vous avec votre nouveau PIN.');
+        $this->redirect(route('login'), navigate: true);
     }
 
     public function verifyMfa(AgentAuthApi $auth): void
@@ -93,10 +158,17 @@ class Login extends Component
 
     public function back(): void
     {
+        $this->restartFromCredentials();
+    }
+
+    private function restartFromCredentials(): void
+    {
         $this->step = 'credentials';
         $this->challengeId = '';
         $this->totpCode = '';
-        $this->error = null;
+        $this->pinSetupToken = '';
+        $this->newPin = '';
+        $this->confirmPin = '';
     }
 
     private function normalizeCredentials(): void
@@ -146,6 +218,26 @@ class Login extends Component
     /**
      * @param  array<string, mixed>  $result
      */
+    private function startPinSetupStep(array $result): void
+    {
+        $token = $result['pinSetupToken'] ?? null;
+
+        if (! is_string($token) || $token === '') {
+            $this->error = 'Reponse de configuration du PIN incomplete.';
+
+            return;
+        }
+
+        $this->pinSetupToken = $token;
+        $this->newPin = '';
+        $this->confirmPin = '';
+        $this->pin = '';
+        $this->step = 'pin-setup';
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     */
     private function completeLogin(array $result): void
     {
         $tokens = $result['tokens'] ?? null;
@@ -182,6 +274,10 @@ class Login extends Component
             'pin.regex' => 'Le PIN Agent doit contenir 4 a 8 chiffres.',
             'totpCode.required' => 'Code TOTP requis.',
             'totpCode.regex' => 'Le code TOTP doit contenir 6 chiffres.',
+            'newPin.required' => 'Nouveau PIN requis.',
+            'newPin.regex' => 'Le PIN doit contenir 4 a 8 chiffres.',
+            'confirmPin.required' => 'Confirmation du PIN requise.',
+            'confirmPin.regex' => 'La confirmation doit contenir 4 a 8 chiffres.',
         ];
     }
 

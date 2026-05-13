@@ -47,6 +47,8 @@ class AgentLoginTest extends TestCase
                 throw new AgentAuthException('MFA_INVALID', 401);
             }
 
+            public function setupAuthPin(string $pinSetupToken, string $pin): void {}
+
             public function logout(): void {}
         });
 
@@ -97,6 +99,8 @@ class AgentLoginTest extends TestCase
                 throw new AgentAuthException('MFA_INVALID', 401);
             }
 
+            public function setupAuthPin(string $pinSetupToken, string $pin): void {}
+
             public function logout(): void {}
         });
 
@@ -143,6 +147,8 @@ class AgentLoginTest extends TestCase
                 ];
             }
 
+            public function setupAuthPin(string $pinSetupToken, string $pin): void {}
+
             public function logout(): void {}
         });
 
@@ -172,6 +178,8 @@ class AgentLoginTest extends TestCase
             {
                 throw new AgentAuthException('MFA_INVALID', 401);
             }
+
+            public function setupAuthPin(string $pinSetupToken, string $pin): void {}
 
             public function logout(): void {}
         });
@@ -251,6 +259,154 @@ class AgentLoginTest extends TestCase
 
             throw $exception;
         }
+    }
+
+    public function test_login_routes_pin_setup_required_to_pin_setup_step_without_session_tokens(): void
+    {
+        $this->app->instance(AgentAuthApi::class, new class implements AgentAuthApi
+        {
+            public function login(string $phoneCountryCode, string $phoneNumber, string $pin): array
+            {
+                return [
+                    'mfaRequired' => false,
+                    'pinSetupRequired' => true,
+                    'pinSetupToken' => 'pin-setup-jwt',
+                    'pinSetupTokenExpiresAt' => '2026-05-12T12:10:00Z',
+                ];
+            }
+
+            public function verifyMfa(string $challengeId, string $code): array
+            {
+                throw new AgentAuthException('MFA_INVALID', 401);
+            }
+
+            public function setupAuthPin(string $pinSetupToken, string $pin): void {}
+
+            public function logout(): void {}
+        });
+
+        Livewire::test(Login::class)
+            ->set('phoneNumber', '3201456')
+            ->set('pin', '1234')
+            ->call('login')
+            ->assertSet('step', 'pin-setup')
+            ->assertSet('pinSetupToken', 'pin-setup-jwt')
+            ->assertSee('Definir votre PIN');
+
+        $this->assertNull(session('agent_access_token'));
+        $this->assertNotTrue(session('agent_authenticated'));
+    }
+
+    public function test_setup_pin_rejects_mismatched_confirmation(): void
+    {
+        $spy = new class
+        {
+            public int $calls = 0;
+        };
+
+        $this->app->instance(AgentAuthApi::class, new class($spy) implements AgentAuthApi
+        {
+            public function __construct(private readonly object $spy) {}
+
+            public function login(string $phoneCountryCode, string $phoneNumber, string $pin): array
+            {
+                return [
+                    'mfaRequired' => false,
+                    'pinSetupRequired' => true,
+                    'pinSetupToken' => 'pin-setup-jwt',
+                ];
+            }
+
+            public function verifyMfa(string $challengeId, string $code): array
+            {
+                throw new AgentAuthException('MFA_INVALID', 401);
+            }
+
+            public function setupAuthPin(string $pinSetupToken, string $pin): void
+            {
+                $this->spy->calls++;
+            }
+
+            public function logout(): void {}
+        });
+
+        Livewire::test(Login::class)
+            ->set('phoneNumber', '3201456')
+            ->set('pin', '1234')
+            ->call('login')
+            ->set('newPin', '4321')
+            ->set('confirmPin', '4322')
+            ->call('setupPin')
+            ->assertHasErrors(['confirmPin']);
+
+        $this->assertSame(0, $spy->calls);
+    }
+
+    public function test_setup_pin_calls_api_and_returns_to_credentials_step(): void
+    {
+        $spy = new class
+        {
+            public array $payload = [];
+        };
+
+        $this->app->instance(AgentAuthApi::class, new class($spy) implements AgentAuthApi
+        {
+            public function __construct(private readonly object $spy) {}
+
+            public function login(string $phoneCountryCode, string $phoneNumber, string $pin): array
+            {
+                return [
+                    'mfaRequired' => false,
+                    'pinSetupRequired' => true,
+                    'pinSetupToken' => 'pin-setup-jwt',
+                ];
+            }
+
+            public function verifyMfa(string $challengeId, string $code): array
+            {
+                throw new AgentAuthException('MFA_INVALID', 401);
+            }
+
+            public function setupAuthPin(string $pinSetupToken, string $pin): void
+            {
+                $this->spy->payload = [
+                    'pinSetupToken' => $pinSetupToken,
+                    'pin' => $pin,
+                ];
+            }
+
+            public function logout(): void {}
+        });
+
+        Livewire::test(Login::class)
+            ->set('phoneNumber', '3201456')
+            ->set('pin', '1234')
+            ->call('login')
+            ->set('newPin', '4321')
+            ->set('confirmPin', '4321')
+            ->call('setupPin')
+            ->assertRedirect(route('login'));
+
+        $this->assertSame([
+            'pinSetupToken' => 'pin-setup-jwt',
+            'pin' => '4321',
+        ], $spy->payload);
+        $this->assertNull(session('agent_access_token'));
+    }
+
+    public function test_http_auth_pin_setup_sends_pin_setup_token_as_bearer(): void
+    {
+        config(['komopay.base_url' => 'https://api.lipa.test']);
+
+        Http::fake([
+            'https://api.lipa.test/api/v1/auth/agent/auth-pin/setup' => Http::response('', 204),
+        ]);
+
+        (new HttpAgentAuthApi(app(KomopayClient::class)))->setupAuthPin('pin-setup-jwt', '4321');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.lipa.test/api/v1/auth/agent/auth-pin/setup'
+            && $request->hasHeader('Authorization', 'Bearer pin-setup-jwt')
+            && $request['pin'] === '4321');
     }
 
     public function test_http_auth_does_not_report_missing_login_endpoint_as_invalid_credentials(): void

@@ -42,6 +42,20 @@ final class HttpAgentAuthApi implements AgentAuthApi
         return $this->loginData($response);
     }
 
+    public function setupAuthPin(string $pinSetupToken, string $pin): void
+    {
+        $response = $this->client->post(
+            '/api/v1/auth/agent/auth-pin/setup',
+            ['pin' => $pin],
+            ['Authorization' => 'Bearer '.$pinSetupToken],
+            false,
+        );
+
+        if ($response->failed()) {
+            throw $this->exceptionFromResponse($response, 'AUTH_PIN_FORMAT');
+        }
+    }
+
     public function logout(): void
     {
         try {
@@ -74,6 +88,7 @@ final class HttpAgentAuthApi implements AgentAuthApi
     {
         return match ($response->status()) {
             400 => 'VALIDATION_FIELD_REQUIRED',
+            401 => $fallbackCode === 'AUTH_PIN_FORMAT' ? 'AUTH_INVALID_TOKEN' : $fallbackCode,
             410 => 'LEGACY_OTP_LOGIN_REMOVED',
             404, 405 => 'AUTH_ENDPOINT_NOT_FOUND',
             429 => 'TERMINAL_RATE_LIMIT',
