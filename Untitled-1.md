@@ -12,5 +12,6 @@ TODO:
 Display correctly erros and exception *
 Make login pass with real  *
 Complete other feature of agent in UI *
-In mobile commission, statements misses should display all features
+In mobile commission, statements misses should display all features *
+Use my alert component on all page alerting and delete x-agent-icon if pertinent
 agent should have lookup on merchant and card and on their operation make lookup first and pass uuid to the API

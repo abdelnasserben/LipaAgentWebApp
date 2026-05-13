@@ -165,6 +165,61 @@ body {
     }
 }
 
+/* Hamburger button — mobile only, hidden once the sidebar appears */
+.app-hamburger {
+    display: inline-flex;
+}
+
+@media (min-width: 640px) {
+    .app-hamburger {
+        display: none;
+    }
+}
+
+/* Mobile drawer — hidden on tablet/desktop (sidebar takes over) */
+@media (min-width: 640px) {
+    .app-drawer-root {
+        display: none !important;
+    }
+}
+
+/* Drawer transition classes (Alpine x-transition hooks) */
+.drawer-enter,
+.drawer-leave {
+    transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawer-enter-start,
+.drawer-leave-end {
+    transform: translateX(-100%);
+}
+
+.drawer-enter-end,
+.drawer-leave-start {
+    transform: translateX(0);
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Dashboard hero KPI strip — mobile vs tablet+ visibility helpers.
+   On masque sur mobile uniquement ; au-delà de 640px on laisse l'élément
+   revenir à sa valeur "display" native (block, flex, grid...). */
+.hero-kpi-desktop-only {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .hero-kpi-desktop-only {
+        display: revert;
+    }
+
+    .hero-kpi-mobile-only {
+        display: none;
+    }
+}
+
 * {
     scrollbar-width: thin;
     scrollbar-color: oklch(0.75 0.01 255 / 0.4) transparent;

@@ -19,7 +19,10 @@ class Cards extends Component
 {
     use HandlesApiErrors;
 
-    public string $activeTab = 'sell'; // sell | report-lost | report-stolen | replace
+    public string $activeTab = 'sell'; // sell | report | replace
+
+    // Report-card status: 'lost' or 'stolen' (chosen inside the unified report tab).
+    public string $reportStatus = 'lost';
 
     public ?string $apiError = null;
 
@@ -65,11 +68,23 @@ class Cards extends Component
 
     public function switchTab(string $tab): void
     {
-        if (! in_array($tab, ['sell', 'report-lost', 'report-stolen', 'replace'], true)) {
+        if (! in_array($tab, ['sell', 'report', 'replace'], true)) {
             return;
         }
 
         $this->activeTab  = $tab;
+        $this->lastResult = null;
+        $this->clearApiError();
+        $this->resetValidation();
+    }
+
+    public function setReportStatus(string $status): void
+    {
+        if (! in_array($status, ['lost', 'stolen'], true)) {
+            return;
+        }
+
+        $this->reportStatus = $status;
         $this->lastResult = null;
         $this->clearApiError();
         $this->resetValidation();
@@ -180,25 +195,15 @@ class Cards extends Component
         $this->resetValidation();
     }
 
-    public function reportLost(CardApi $cards): void
+    public function reportCard(CardApi $cards): void
     {
         $this->validateIdentifiers();
         $this->clearApiError();
 
         try {
-            $this->lastResult = $cards->reportLost($this->customerId, $this->cardId);
-        } catch (ApiException $exception) {
-            $this->showApiError($exception);
-        }
-    }
-
-    public function reportStolen(CardApi $cards): void
-    {
-        $this->validateIdentifiers();
-        $this->clearApiError();
-
-        try {
-            $this->lastResult = $cards->reportStolen($this->customerId, $this->cardId);
+            $this->lastResult = $this->reportStatus === 'stolen'
+                ? $cards->reportStolen($this->customerId, $this->cardId)
+                : $cards->reportLost($this->customerId, $this->cardId);
         } catch (ApiException $exception) {
             $this->showApiError($exception);
         }

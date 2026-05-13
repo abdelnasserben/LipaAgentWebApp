@@ -72,23 +72,25 @@
                 </div>
             @endif
 
-            {{-- Today stats strip — real totals derived from today's completed
-                 transactions; no estimation, no ratio split. --}}
-            <div class="flex gap-0 border-t border-white/[0.08] pt-4">
-                @php
-                    $stats = [
-                        ['label' => 'Cash In',    'value' => number_format($todayTotalsByType['CASH_IN'] ?? 0, 0, ',', ' ') . ' KMF'],
-                        ['label' => 'Cash Out',   'value' => number_format($todayTotalsByType['CASH_OUT'] ?? 0, 0, ',', ' ') . ' KMF'],
-                        ['label' => 'Ventes carte','value' => number_format($todayTotalsByType['CARD_SALE'] ?? 0, 0, ',', ' ') . ' KMF'],
-                        ['label' => 'Opérations', 'value' => $summary['totalCompletedCountToday']],
-                        ['label' => 'Commission', 'value' => number_format($summary['commissionEarnedToday'], 0, ',', ' ') . ' KMF'],
-                    ];
-                @endphp
+            {{-- Today stats strip — mêmes style/disposition qu'avant.
+                 Sur mobile on n'affiche que Cash In + Cash Out ;
+                 Ventes carte, Opérations et Commission passent dans la grille
+                 "Aujourd'hui" située sous le hero. --}}
+            @php
+                $statCashIn  = ['label' => 'Cash In',     'value' => number_format($todayTotalsByType['CASH_IN'] ?? 0, 0, ',', ' ') . ' KMF', 'mobile' => true];
+                $statCashOut = ['label' => 'Cash Out',    'value' => number_format($todayTotalsByType['CASH_OUT'] ?? 0, 0, ',', ' ') . ' KMF', 'mobile' => true];
+                $statCard    = ['label' => 'Ventes carte','value' => number_format($todayTotalsByType['CARD_SALE'] ?? 0, 0, ',', ' ') . ' KMF', 'mobile' => false];
+                $statOps     = ['label' => 'Opérations',  'value' => $summary['totalCompletedCountToday'], 'mobile' => false];
+                $statCom     = ['label' => 'Commission',  'value' => number_format($summary['commissionEarnedToday'], 0, ',', ' ') . ' KMF', 'mobile' => false];
+                $stats       = [$statCashIn, $statCashOut, $statCard, $statOps, $statCom];
+            @endphp
 
+            <div class="flex gap-0 border-t border-white/[0.08] pt-4">
                 @foreach($stats as $i => $stat)
                     <div @class([
                         'flex-1 pr-2',
                         'border-l border-white/[0.08] pl-2' => $i > 0,
+                        'hero-kpi-desktop-only' => !$stat['mobile'],
                     ])>
                         <div class="mb-1 text-[10px] font-medium uppercase tracking-[0.06em] text-white/[0.38]">
                             {{ $stat['label'] }}
@@ -99,6 +101,25 @@
                     </div>
                 @endforeach
             </div>
+        </div>
+    </div>
+
+    {{-- Mobile-only secondary KPI grid (Ventes carte, Opérations, Commission) --}}
+    <div class="hero-kpi-mobile-only px-4 pt-4">
+        <div class="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
+            Aujourd'hui
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+            @foreach([$statCard, $statOps, $statCom] as $stat)
+                <div class="rounded-[10px] border border-app-border bg-app-surface px-3 py-2.5">
+                    <div class="mb-1 text-[9px] font-semibold uppercase tracking-[0.06em] text-app-muted">
+                        {{ $stat['label'] }}
+                    </div>
+                    <div class="font-mono text-[12px] font-bold tracking-[-0.01em] text-app-text">
+                        {{ $stat['value'] }}
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
 

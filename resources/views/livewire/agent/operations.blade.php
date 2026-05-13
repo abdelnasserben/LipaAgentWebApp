@@ -321,9 +321,10 @@
                         Recherchez le client par numéro, confirmez son identité puis saisissez le montant à créditer.
                     </p>
 
-                    <div class="rounded-lg bg-app-bg p-3 text-xs leading-relaxed text-app-muted">
+                    <x-alert variant="neutral" :icon="false" class="border-0"
+                        text-class="text-xs font-normal leading-relaxed">
                         Vérifiez toujours le nom, le statut et le niveau KYC avant de valider l’opération.
-                    </div>
+                    </x-alert>
                 </aside>
             </div>
 
@@ -357,7 +358,9 @@
                                     <input type="text" wire:model="coMerchantId"
                                         placeholder="00000000-0000-0000-0000-000000000000"
                                         class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-[11px] tracking-[0.03em] text-app-text outline-none focus:border-app-amber" />
-                                    @error('coMerchantId') <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p> @enderror
+                                    @error('coMerchantId')
+                                        <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
+                                    @enderror
                                 </div>
 
                                 <div>
@@ -391,13 +394,9 @@
                                 </div>
                             </div>
 
-                            <div
-                                class="my-5 flex items-start gap-2 rounded-lg border border-app-amber bg-app-amber-bg px-3.5 py-2.5 text-app-amber">
-                                <x-agent-icon name="warning" :size="14" class="mt-px shrink-0" />
-                                <span class="text-xs font-medium">
-                                    Une validation backoffice peut être requise
-                                </span>
-                            </div>
+                            <x-alert variant="warning" class="my-5" text-class="text-xs font-medium">
+                                Une validation backoffice peut être requise
+                            </x-alert>
 
                             <div class="flex justify-end">
                                 <button wire:click="confirmCashOut" wire:loading.attr="disabled" type="button"
@@ -567,7 +566,8 @@
 
                                     <x-detail-row label="Commission" :mono="true">
                                         <span class="text-app-green">+
-                                            {{ number_format($coResult['commissionAmount'] ?? 0, 0, ',', ' ') }} KMF</span>
+                                            {{ number_format($coResult['commissionAmount'] ?? 0, 0, ',', ' ') }}
+                                            KMF</span>
                                     </x-detail-row>
                                 @endif
 
@@ -595,10 +595,10 @@
                         Saisissez la référence marchand, vérifiez le montant et confirmez l’opération.
                     </p>
 
-                    <div
-                        class="rounded-lg border border-app-amber bg-app-amber-bg p-3 text-xs leading-relaxed text-app-amber">
+                    <x-alert variant="warning" class="border-0" :icon="false"
+                        text-class="text-xs font-normal leading-relaxed">
                         Certains montants peuvent nécessiter une approbation backoffice.
-                    </div>
+                    </x-alert>
                 </aside>
             </div>
         @endif
