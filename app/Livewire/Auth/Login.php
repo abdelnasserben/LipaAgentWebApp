@@ -61,11 +61,13 @@ class Login extends Component
         }
 
         if (($result['mfaRequired'] ?? false) === true) {
+            session(['agent_totp_enrolled' => true]);
             $this->startMfaStep($result);
 
             return;
         }
 
+        session(['agent_totp_enrolled' => false]);
         $this->completeLogin($result);
     }
 

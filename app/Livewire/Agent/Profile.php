@@ -26,12 +26,15 @@ class Profile extends Component
     public ?string $apiError = null;
     public string $activeTab = 'profile';
 
+    public bool $totpEnrolled = false;
     public bool $totpSetupOpen = false;
+    public bool $totpRevokeOpen = false;
     public ?string $totpSecret = null;
     public ?string $totpQrUri = null;
     public string $totpQrCodeUrl = '';
     public string $totpQrCodeSvg = '';
     public string $totpCode = '';
+    public string $totpRevokeCode = '';
     public ?string $totpError = null;
     public ?string $totpSuccess = null;
     public bool $showSignOutConfirm = false;
@@ -40,6 +43,7 @@ class Profile extends Component
     {
         $this->profile = $this->defaultProfile();
         $this->limits = $this->defaultLimits();
+        $this->totpEnrolled = (bool) session('agent_totp_enrolled', false);
 
         try {
             $this->profile = $agent->getProfile();
@@ -102,7 +106,47 @@ class Profile extends Component
         }
 
         $this->totpSuccess = 'Authentification TOTP activée avec succès.';
+        $this->totpEnrolled = true;
+        session(['agent_totp_enrolled' => true]);
         $this->resetTotpState();
+    }
+
+    public function toggleTotpRevoke(): void
+    {
+        $this->totpError = null;
+        $this->totpSuccess = null;
+        $this->totpRevokeCode = '';
+        $this->totpRevokeOpen = ! $this->totpRevokeOpen;
+    }
+
+    public function confirmTotpRevoke(TotpApi $totp): void
+    {
+        $this->totpError = null;
+
+        $this->validate(
+            ['totpRevokeCode' => 'required|digits:6'],
+            [
+                'totpRevokeCode.required' => 'Le code à 6 chiffres est requis.',
+                'totpRevokeCode.digits'   => 'Le code doit comporter exactement 6 chiffres.',
+            ],
+        );
+
+        try {
+            $totp->revoke($this->totpRevokeCode);
+        } catch (ApiException $exception) {
+            if ($exception->apiCode() === 'MFA_INVALID') {
+                $this->totpError = 'Code TOTP invalide. Vérifiez le code généré par votre application.';
+                return;
+            }
+            $this->showApiError($exception);
+            return;
+        }
+
+        $this->totpEnrolled = false;
+        session(['agent_totp_enrolled' => false]);
+        $this->totpRevokeOpen = false;
+        $this->totpRevokeCode = '';
+        $this->totpSuccess = 'Authentification TOTP révoquée. Vous pouvez à nouveau la configurer.';
     }
 
     private function renderQrSvg(string $uri): string

@@ -230,14 +230,16 @@
                             <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
                                 Authentification 2FA (TOTP)
                             </div>
+
+                            @if ($totpEnrolled)
+                                <span class="inline-flex items-center gap-1.5 rounded-full border border-app-green bg-app-green-bg px-2 py-0.5 text-[10px] font-semibold text-app-green">
+                                    <x-agent-icon name="check" :size="12" />
+                                    Activé
+                                </span>
+                            @endif
                         </div>
 
                         <div class="p-4">
-                            <p class="mb-3 mt-0 text-[13px] text-app-muted">
-                                Activez l'authentification TOTP pour remplacer les SMS OTP par une app d'authentification
-                                (Google Authenticator, etc.).
-                            </p>
-
                             @if ($totpSuccess)
                                 <div class="mb-3 flex items-center gap-2 rounded-lg border border-app-green bg-app-green-bg px-3 py-2 text-[12px] text-app-green">
                                     <x-agent-icon name="check" :size="14" />
@@ -245,17 +247,87 @@
                                 </div>
                             @endif
 
-                            <button wire:click="toggleTotpSetup" wire:loading.attr="disabled" type="button"
-                                class="cursor-pointer rounded-lg border-0 bg-app-accent px-[18px] py-2.5 text-[13px] font-semibold text-white disabled:opacity-70">
-                                <span wire:loading.remove wire:target="toggleTotpSetup">
-                                    {{ $totpSetupOpen ? 'Annuler la configuration' : 'Configurer le TOTP' }}
-                                </span>
-                                <span wire:loading wire:target="toggleTotpSetup">Préparation…</span>
-                            </button>
+                            @if ($totpEnrolled)
+                                <div class="mb-3 flex items-start gap-2 rounded-lg border border-app-border bg-app-bg px-3 py-2.5 text-[12px] text-app-text">
+                                    <x-agent-icon name="check" :size="14" class="mt-0.5 text-app-green" />
+                                    <div>
+                                        <div class="font-semibold">TOTP déjà configuré</div>
+                                        <div class="mt-0.5 text-app-muted">
+                                            Vos connexions sont protégées par votre application d'authentification.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button wire:click="toggleTotpRevoke" wire:loading.attr="disabled" type="button"
+                                    class="cursor-pointer rounded-lg border border-app-red bg-app-red-bg px-[18px] py-2.5 text-[13px] font-semibold text-app-red disabled:opacity-70">
+                                    {{ $totpRevokeOpen ? 'Annuler' : 'Révoquer le TOTP' }}
+                                </button>
+                            @else
+                                <p class="mb-3 mt-0 text-[13px] text-app-muted">
+                                    Activez l'authentification TOTP pour remplacer les SMS OTP par une app d'authentification
+                                    (Google Authenticator, etc.).
+                                </p>
+
+                                <button wire:click="toggleTotpSetup" wire:loading.attr="disabled" type="button"
+                                    class="cursor-pointer rounded-lg border-0 bg-app-accent px-[18px] py-2.5 text-[13px] font-semibold text-white disabled:opacity-70">
+                                    <span wire:loading.remove wire:target="toggleTotpSetup">
+                                        {{ $totpSetupOpen ? 'Annuler la configuration' : 'Configurer le TOTP' }}
+                                    </span>
+                                    <span wire:loading wire:target="toggleTotpSetup">Préparation…</span>
+                                </button>
+                            @endif
                         </div>
                     </div>
 
-                    @if ($totpSetupOpen)
+                    @if ($totpEnrolled && $totpRevokeOpen)
+                        <div class="overflow-hidden rounded-xl border border-app-red bg-app-surface">
+                            <div class="border-b border-app-border px-4 py-3">
+                                <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-red">
+                                    Révoquer le TOTP
+                                </div>
+                            </div>
+
+                            <div class="p-4">
+                                <p class="mb-5 mt-0 text-[13px] leading-relaxed text-app-muted">
+                                    Saisissez le code à 6 chiffres généré par votre application d'authentification pour
+                                    confirmer la révocation. Après révocation, vos prochaines connexions ne demanderont
+                                    plus de code TOTP jusqu'à ce que vous le reconfiguriez.
+                                </p>
+
+                                <div class="mb-5">
+                                    <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                        Code de vérification
+                                    </label>
+
+                                    <input type="text" wire:model="totpRevokeCode" inputmode="numeric" maxlength="6"
+                                        placeholder="******"
+                                        class="box-border w-full rounded-xl border-[1.5px] border-app-border bg-app-bg px-4 py-3 text-center font-mono text-xl tracking-[0.25em] text-app-text outline-none focus:border-app-accent" />
+
+                                    @error('totpRevokeCode')
+                                        <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                @if ($totpError)
+                                    <div class="mb-3 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3 py-2 text-[12px] text-app-red">
+                                        <x-agent-icon name="warning" :size="14" />
+                                        {{ $totpError }}
+                                    </div>
+                                @endif
+
+                                <button wire:click="confirmTotpRevoke" wire:loading.attr="disabled" type="button"
+                                    class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-app-red bg-app-red px-5 py-3 text-[14px] font-bold text-white transition-opacity hover:opacity-95 disabled:opacity-70">
+                                    <span wire:loading.remove wire:target="confirmTotpRevoke">Confirmer la révocation</span>
+                                    <span wire:loading wire:target="confirmTotpRevoke" class="flex items-center gap-2">
+                                        <x-spinner :size="14" />
+                                        Révocation…
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if (! $totpEnrolled && $totpSetupOpen)
                         <div class="overflow-hidden rounded-xl border border-app-border bg-app-surface">
                             <div class="border-b border-app-border px-4 py-3">
                                 <div class="text-[10px] font-bold uppercase tracking-[0.1em] text-app-muted">
