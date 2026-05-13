@@ -57,7 +57,7 @@ final class ApiErrorMessage
             'WALLET_CLOSED' => 'Wallet ferme. Operation impossible.',
             'INSUFFICIENT_BALANCE' => 'Solde insuffisant pour effectuer cette operation.',
 
-            'CONFIG_LIMIT_PROFILE_NOT_FOUND' => "Aucun profil de limites n'est configure pour cet Agent.",
+            'CONFIG_LIMIT_PROFILE_NOT_FOUND' => "Aucun profil de limites n'est configure pour ce compte. Contactez le support.",
             'CONFIG_RULE_INACTIVE' => 'La regle de limite est inactive.',
             'LIMIT_EXCEEDED' => 'Limite autorisee depassee pour cette operation.',
 

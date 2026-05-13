@@ -72,7 +72,7 @@
                                             class="flex shrink-0 items-center justify-center rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 font-mono text-sm font-bold text-app-text">
                                             +{{ $sellPhoneCountryCode }}
                                         </div>
-                                        <input type="tel" wire:model="sellPhoneNumber" placeholder="3XX XXXX"
+                                        <input type="tel" wire:model.blur="sellPhoneNumber" placeholder="3XX XXXX"
                                             inputmode="numeric" wire:keydown.enter="lookupSellCustomer"
                                             class="box-border min-w-0 flex-1 rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base tracking-[0.05em] text-app-text outline-none focus:border-app-purple" />
                                     </div>
@@ -251,42 +251,80 @@
                             </div>
                         @endif
                     @else
-                        {{-- Common identifiers --}}
+                        {{-- Card lookup (shared by report + replace) --}}
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
                             <div class="mb-4">
-                                <div class="mb-1 text-[15px] font-bold text-app-text">Identifiants de la carte</div>
+                                <div class="mb-1 text-[15px] font-bold text-app-text">Rechercher la carte</div>
                                 <div class="text-xs text-app-muted">
-                                    Saisissez l'identifiant du client et de la carte concernée.
+                                    Scannez ou saisissez le NFC UID de la carte (14 caractères hexadécimaux).
                                 </div>
                             </div>
 
-                            <div class="grid gap-4">
-                                <div>
+                            @if ($cardLookupError)
+                                <div
+                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
+                                    <x-agent-icon name="warning" :size="14" />
+                                    {{ $cardLookupError }}
+                                </div>
+                            @endif
+
+                            @if (! $lookedUpCard)
+                                <div class="mb-3">
                                     <label
                                         class="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
-                                        Identifiant client (UUID)
+                                        NFC UID
                                     </label>
-                                    <input type="text" wire:model="customerId"
-                                        placeholder="00000000-0000-0000-0000-000000000000"
-                                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-[11px] tracking-[0.03em] text-app-text outline-none focus:border-app-accent" />
-                                    @error('customerId')
+                                    <input type="text" wire:model.blur="cardNfcUid" placeholder="04AABB01CCDDE0FF"
+                                        maxlength="14" wire:keydown.enter="lookupCard"
+                                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-[13px] uppercase tracking-[0.05em] text-app-text outline-none focus:border-app-accent" />
+                                    @error('cardNfcUid')
                                         <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
                                     @enderror
                                 </div>
 
-                                <div>
-                                    <label
-                                        class="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
-                                        Identifiant carte (UUID)
-                                    </label>
-                                    <input type="text" wire:model="cardId"
-                                        placeholder="00000000-0000-0000-0000-000000000000"
-                                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-[11px] tracking-[0.03em] text-app-text outline-none focus:border-app-accent" />
-                                    @error('cardId')
-                                        <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
-                                    @enderror
+                                <div class="flex justify-end">
+                                    <button wire:click="lookupCard" wire:loading.attr="disabled" type="button"
+                                        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-48">
+                                        <span wire:loading.remove wire:target="lookupCard" class="flex items-center gap-2">
+                                            <x-agent-icon name="search" :size="16" />
+                                            Rechercher
+                                        </span>
+                                        <span wire:loading.flex wire:target="lookupCard"
+                                            class="hidden items-center gap-2">
+                                            <x-spinner :size="16" />
+                                            Recherche…
+                                        </span>
+                                    </button>
                                 </div>
-                            </div>
+                            @else
+                                <div
+                                    class="flex items-start gap-3 rounded-xl border-[1.5px] border-app-accent bg-app-accent-bg p-4">
+                                    <div
+                                        class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px] bg-app-accent text-white">
+                                        <x-agent-icon name="card" :size="20" />
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <div class="font-mono text-[13px] font-bold text-app-text">
+                                            NFC {{ $lookedUpCard['nfcUid'] ?? '—' }}
+                                        </div>
+                                        <div class="mt-0.5 font-mono text-[11px] text-app-muted">
+                                            Type {{ $lookedUpCard['cardType'] ?? '—' }}
+                                            @if (!empty($lookedUpCard['expiresAt']))
+                                                • Expire le {{ $lookedUpCard['expiresAt'] }}
+                                            @endif
+                                        </div>
+                                        <div class="mt-1.5 flex flex-wrap gap-1.5">
+                                            <x-agent-badge :status="$lookedUpCard['status'] ?? 'ACTIVE'" />
+                                        </div>
+                                    </div>
+
+                                    <button wire:click="clearCardLookup" type="button"
+                                        class="shrink-0 cursor-pointer border-0 bg-transparent p-1 text-[11px] font-semibold text-app-muted">
+                                        Changer
+                                    </button>
+                                </div>
+                            @endif
                         </div>
 
                         {{-- REPORT (perdue OU volée) --}}
@@ -334,6 +372,7 @@
 
                                 <div class="flex justify-end">
                                     <button wire:click="reportCard" wire:loading.attr="disabled" type="button"
+                                        @disabled(! $lookedUpCard)
                                         @class([
                                             'flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-52',
                                             'bg-app-red' => $isStolen,
@@ -415,6 +454,7 @@
 
                                 <div class="flex justify-end">
                                     <button wire:click="replaceCard" wire:loading.attr="disabled" type="button"
+                                        @disabled(! $lookedUpCard)
                                         class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-52">
                                         <span wire:loading.remove wire:target="replaceCard">Remplacer la carte</span>
                                         <span wire:loading.flex wire:target="replaceCard"
@@ -454,8 +494,9 @@
                                             <x-agent-badge :status="$lastResult['status'] ?? 'COMPLETED'" />
                                         </x-detail-row>
                                     @else
-                                        <x-detail-row label="ID Carte"
-                                            :mono="true">{{ $lastResult['id'] ?? $cardId }}</x-detail-row>
+                                        <x-detail-row label="ID Carte" :mono="true">
+                                            {{ $lastResult['id'] ?? ($lookedUpCard['cardId'] ?? '—') }}
+                                        </x-detail-row>
                                         <x-detail-row label="N° interne"
                                             :mono="true">{{ $lastResult['internalCardNumber'] ?? '—' }}</x-detail-row>
                                         <x-detail-row label="Statut carte" :border="false">

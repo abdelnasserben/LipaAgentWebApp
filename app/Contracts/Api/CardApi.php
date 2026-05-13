@@ -14,6 +14,13 @@ interface CardApi
     public function getCardStock(): array;
 
     /**
+     * GET /api/v1/agent/cards/lookup — minimal card projection by scanned NFC UID.
+     *
+     * @return array<string, mixed>|null CardLookupResponse, or null when CARD_NOT_FOUND.
+     */
+    public function lookupCard(string $nfcUid): ?array;
+
+    /**
      * POST /api/v1/agent/card-sell — sell an assigned NFC card to a customer.
      *
      * @param  array{customerId: string, nfcUid: string, cardPrice: int}  $data

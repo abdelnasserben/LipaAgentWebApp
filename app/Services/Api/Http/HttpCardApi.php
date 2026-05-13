@@ -20,6 +20,25 @@ final class HttpCardApi implements CardApi
         return $result['data'];
     }
 
+    public function lookupCard(string $nfcUid): ?array
+    {
+        $response = $this->client->get('/api/v1/agent/cards/lookup', [
+            'nfcUid' => $nfcUid,
+        ]);
+
+        if ($response->status() === 404) {
+            $exception = $this->client->exceptionFromResponse($response, 'CARD_NOT_FOUND');
+
+            if ($exception->apiCode() === 'CARD_NOT_FOUND') {
+                return null;
+            }
+
+            throw $exception;
+        }
+
+        return $this->client->data($response, 'CARD_NOT_FOUND');
+    }
+
     public function sellCard(array $data): array
     {
         return $this->client->data(

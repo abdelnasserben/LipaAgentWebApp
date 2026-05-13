@@ -43,6 +43,35 @@ final class MockOperationsApi implements OperationsApi
         ];
     }
 
+    public function lookupMerchant(string $phoneCountryCode, string $phoneNumber): ?array
+    {
+        if (! preg_match('/^\d{4,15}$/', $phoneNumber)) {
+            return null;
+        }
+
+        // Deterministic mock: numbers ending in 0 are "not found"; numbers starting with 9 are SUSPENDED.
+        if (str_ends_with($phoneNumber, '0')) {
+            return null;
+        }
+
+        $names = FixtureLoader::load('customers/random-names');
+        $nameIndex = (int) (hexdec(substr(md5($phoneNumber . 'merchant'), 0, 4)) % count($names));
+        $businessName = 'Boutique ' . $names[$nameIndex];
+
+        $status = str_starts_with($phoneNumber, '9') ? 'SUSPENDED' : 'ACTIVE';
+
+        return [
+            'merchantId'       => 'mch_' . strtoupper(substr(md5($phoneCountryCode . $phoneNumber . 'mch'), 0, 20)),
+            'externalRef'      => 'MCH-' . str_pad((string) (crc32($phoneNumber) % 90000 + 10000), 5, '0', STR_PAD_LEFT),
+            'businessName'     => $businessName,
+            'phoneCountryCode' => $phoneCountryCode,
+            'phoneNumber'      => $phoneNumber,
+            'status'           => $status,
+            'kycLevel'         => 'KYC_VERIFIED',
+            'canCashOut'       => $status === 'ACTIVE',
+        ];
+    }
+
     public function processCashIn(array $data): array
     {
         $amount     = (int) ($data['amount'] ?? 0);

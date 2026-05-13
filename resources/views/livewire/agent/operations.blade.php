@@ -64,7 +64,7 @@
                                         +{{ $ciPhoneCountryCode }}
                                     </div>
 
-                                    <input type="tel" wire:model="ciPhoneNumber" placeholder="3XX XXXX"
+                                    <input type="tel" wire:model.blur="ciPhoneNumber" placeholder="3XX XXXX"
                                         inputmode="numeric" wire:keydown.enter="lookupCustomer"
                                         class="box-border min-w-0 flex-1 rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base tracking-[0.05em] text-app-text outline-none focus:border-app-green" />
                                 </div>
@@ -90,54 +90,46 @@
                         {{-- confirm step --}}
                     @elseif($ciStep === 'confirm')
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
-                            <button wire:click="backToLookup" type="button"
-                                class="mb-5 flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-[13px] font-semibold text-app-muted">
-                                <x-agent-icon name="back" :size="16" />
-                                Retour
-                            </button>
-
                             <div class="mb-5">
                                 <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">Confirmer le client
                                 </div>
                                 <div class="text-xs text-app-muted">Vérifiez les informations avant de continuer</div>
                             </div>
 
-                            <div class="mb-5 rounded-xl border-[1.5px] border-app-border bg-app-bg p-5">
-                                <div class="mb-4 flex items-center gap-3.5">
-                                    <div
-                                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-app-accent-bg text-xl font-extrabold text-app-accent">
-                                        {{ mb_strtoupper(mb_substr($ciCustomer['fullName'], 0, 1)) }}
+                            <div class="mb-5 flex items-start gap-3.5 rounded-xl border-[1.5px] border-app-border bg-app-bg p-5">
+                                <div
+                                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-app-accent-bg text-xl font-extrabold text-app-accent">
+                                    {{ mb_strtoupper(mb_substr($ciCustomer['fullName'], 0, 1)) }}
+                                </div>
+
+                                <div class="min-w-0 flex-1">
+                                    <div class="truncate text-lg font-extrabold tracking-[-0.02em] text-app-text">
+                                        {{ $ciCustomer['fullName'] }}
+                                    </div>
+                                    <div class="mt-0.5 font-mono text-[13px] text-app-muted">
+                                        +{{ $ciCustomer['phoneCountryCode'] }} {{ $ciCustomer['phoneNumber'] }}
                                     </div>
 
-                                    <div class="min-w-0">
-                                        <div class="truncate text-lg font-extrabold tracking-[-0.02em] text-app-text">
-                                            {{ $ciCustomer['fullName'] }}
-                                        </div>
-                                        <div class="mt-0.5 font-mono text-[13px] text-app-muted">
-                                            +{{ $ciCustomer['phoneCountryCode'] }} {{ $ciCustomer['phoneNumber'] }}
-                                        </div>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <x-agent-badge :status="$ciCustomer['status']" />
+                                        <x-agent-badge :status="$ciCustomer['kycLevel']" />
+                                    </div>
+
+                                    <div class="mt-3.5 border-t border-app-border pt-3.5">
+                                        <x-detail-row label="ID Client" :mono="true"
+                                            :border="false">{{ $ciCustomer['customerId'] }}</x-detail-row>
                                     </div>
                                 </div>
 
-                                <div class="flex flex-wrap gap-2">
-                                    <x-agent-badge :status="$ciCustomer['status']" />
-                                    <x-agent-badge :status="$ciCustomer['kycLevel']" />
-                                </div>
-
-                                <div class="mt-3.5 border-t border-app-border pt-3.5">
-                                    <x-detail-row label="ID Client" :mono="true"
-                                        :border="false">{{ $ciCustomer['customerId'] }}</x-detail-row>
-                                </div>
+                                <button wire:click="backToLookup" type="button"
+                                    class="shrink-0 cursor-pointer border-0 bg-transparent p-1 text-[11px] font-semibold text-app-muted hover:text-app-text">
+                                    Changer
+                                </button>
                             </div>
 
-                            <div class="grid gap-2.5 md:flex md:justify-end">
-                                <button wire:click="backToLookup" type="button"
-                                    class="order-2 w-full cursor-pointer rounded-[10px] border-[1.5px] border-app-border bg-transparent p-3 text-sm font-semibold text-app-muted md:order-1 md:w-auto md:min-w-40">
-                                    Ce n'est pas lui
-                                </button>
-
+                            <div class="flex justify-end">
                                 <button wire:click="confirmCustomer" type="button"
-                                    class="order-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-green p-3.5 text-[15px] font-bold text-white md:order-2 md:w-auto md:min-w-52">
+                                    class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-green p-3.5 text-[15px] font-bold text-white md:w-auto md:min-w-52">
                                     <x-agent-icon name="check" :size="16" />
                                     Confirmer ce client
                                 </button>
@@ -162,8 +154,12 @@
                                     </div>
                                 </div>
 
-                                <div class="ml-auto">
+                                <div class="ml-auto flex items-center gap-2">
                                     <x-agent-badge :status="$ciCustomer['status']" />
+                                    <button wire:click="backToLookup" type="button"
+                                        class="shrink-0 cursor-pointer border-0 bg-transparent p-1 text-[11px] font-semibold text-app-muted hover:text-app-text">
+                                        Changer
+                                    </button>
                                 </div>
                             </div>
 
@@ -207,34 +203,8 @@
                                 </div>
 
                                 @if ((int) $ciAmount > 0)
-                                    @php
-                                        $fee = (int) floor((int) $ciAmount * 0.01);
-                                        $comm = $fee;
-                                        $net = (int) $ciAmount - $fee;
-                                    @endphp
-
-                                    <div class="rounded-[10px] border border-app-border bg-app-bg p-3.5">
-                                        <div
-                                            class="flex items-center justify-between border-b border-app-border py-1.5">
-                                            <span class="text-xs text-app-muted">Frais estimés</span>
-                                            <span
-                                                class="font-mono text-[13px] font-semibold text-app-text">{{ number_format($fee, 0, ',', ' ') }}
-                                                KMF</span>
-                                        </div>
-
-                                        <div
-                                            class="flex items-center justify-between border-b border-app-border py-1.5">
-                                            <span class="text-xs text-app-muted">Commission</span>
-                                            <span class="font-mono text-[13px] font-semibold text-app-green">+
-                                                {{ number_format($comm, 0, ',', ' ') }} KMF</span>
-                                        </div>
-
-                                        <div class="flex items-center justify-between py-1.5">
-                                            <span class="text-xs font-bold text-app-text">Net client</span>
-                                            <span
-                                                class="font-mono text-sm font-extrabold text-app-text">{{ number_format($net, 0, ',', ' ') }}
-                                                KMF</span>
-                                        </div>
+                                    <div class="rounded-[10px] border border-app-border bg-app-bg px-3.5 py-2.5 text-[11px] text-app-muted">
+                                        Des frais et une commission peuvent s'appliquer. Les montants définitifs seront affichés après confirmation.
                                     </div>
                                 @endif
                             </div>
@@ -332,13 +302,13 @@
         @elseif($activeTab === 'cash-out')
             <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
                 <div class="min-w-0">
-                    {{-- form step --}}
-                    @if ($coStep === 'form')
+                    {{-- lookup step --}}
+                    @if ($coStep === 'lookup')
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
                             <div class="mb-5">
-                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">Cash-out Marchand
+                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">Rechercher un marchand
                                 </div>
-                                <div class="text-xs text-app-muted">Saisissez la référence et le montant</div>
+                                <div class="text-xs text-app-muted">Entrez le numéro de téléphone du marchand</div>
                             </div>
 
                             @if ($coError)
@@ -349,49 +319,113 @@
                                 </div>
                             @endif
 
-                            <div class="grid gap-4">
-                                <div>
-                                    <label
-                                        class="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
-                                        Identifiant marchand (UUID)
-                                    </label>
-                                    <input type="text" wire:model="coMerchantId"
-                                        placeholder="00000000-0000-0000-0000-000000000000"
-                                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-[11px] tracking-[0.03em] text-app-text outline-none focus:border-app-amber" />
-                                    @error('coMerchantId')
-                                        <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
-                                    @enderror
-                                </div>
+                            <div class="mb-5">
+                                <label
+                                    class="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                    Numéro de téléphone
+                                </label>
 
-                                <div>
-                                    <label
-                                        class="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
-                                        Montant en KMF
-                                    </label>
-
-                                    <div class="relative">
-                                        <input type="number" wire:model="coAmount" min="1" placeholder="0"
-                                            class="box-border w-full rounded-[10px] border-2 border-app-border bg-app-surface py-3 pl-4 pr-14 font-mono text-xl font-bold tracking-[-0.02em] text-app-text outline-none focus:border-app-amber md:py-4 md:text-[28px]" />
-                                        <span
-                                            class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-app-muted">
-                                            KMF
-                                        </span>
+                                <div class="flex w-full items-stretch gap-2">
+                                    <div
+                                        class="flex shrink-0 items-center justify-center rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 font-mono text-sm font-bold text-app-text">
+                                        +{{ $coPhoneCountryCode }}
                                     </div>
 
-                                    <div class="mt-3 grid grid-cols-4 gap-2">
-                                        @foreach ([5000, 10000, 25000, 50000] as $quick)
-                                            <button wire:click="$set('coAmount', {{ $quick }})" type="button"
-                                                @class([
-                                                    'cursor-pointer rounded-lg border-[1.5px] px-1 py-2 font-mono text-xs font-bold',
-                                                    'border-app-amber bg-app-amber text-white' => (int) $coAmount === $quick,
-                                                    'border-app-border bg-app-surface text-app-muted' =>
-                                                        (int) $coAmount !== $quick,
-                                                ])>
-                                                {{ number_format($quick, 0, ',', ' ') }}
-                                            </button>
-                                        @endforeach
+                                    <input type="tel" wire:model.blur="coPhoneNumber" placeholder="3XX XXXX"
+                                        inputmode="numeric" wire:keydown.enter="lookupMerchant"
+                                        class="box-border min-w-0 flex-1 rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base tracking-[0.05em] text-app-text outline-none focus:border-app-amber" />
+                                </div>
+                                @error('coPhoneNumber')
+                                    <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="flex justify-end">
+                                <button wire:click="lookupMerchant" wire:loading.attr="disabled" type="button"
+                                    class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-amber p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-48">
+                                    <span wire:loading.remove wire:target="lookupMerchant"
+                                        class="flex items-center gap-2">
+                                        <x-agent-icon name="search" :size="16" />
+                                        Rechercher
+                                    </span>
+                                    <span wire:loading.flex wire:target="lookupMerchant"
+                                        class="hidden items-center gap-2">
+                                        <x-spinner :size="16" />
+                                        Recherche en cours…
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- amount step (merchant confirmed) --}}
+                    @elseif($coStep === 'amount')
+                        <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
+                            <div
+                                class="mb-5 flex items-start gap-3 rounded-xl border-[1.5px] border-app-amber bg-app-amber-bg p-4">
+                                <div
+                                    class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px] bg-app-amber text-white">
+                                    <x-agent-icon name="cash-out" :size="20" />
+                                </div>
+
+                                <div class="min-w-0 flex-1">
+                                    <div class="truncate text-base font-extrabold tracking-[-0.02em] text-app-text">
+                                        {{ $coMerchant['businessName'] ?? '—' }}
+                                    </div>
+                                    <div class="mt-0.5 font-mono text-[12px] text-app-muted">
+                                        {{ $coMerchant['externalRef'] ?? '—' }} •
+                                        +{{ $coMerchant['phoneCountryCode'] ?? '' }} {{ $coMerchant['phoneNumber'] ?? '' }}
+                                    </div>
+                                    <div class="mt-1.5 flex flex-wrap gap-1.5">
+                                        <x-agent-badge :status="$coMerchant['status'] ?? 'ACTIVE'" />
+                                        <x-agent-badge :status="$coMerchant['kycLevel'] ?? 'KYC_BASIC'" />
                                     </div>
                                 </div>
+
+                                <button wire:click="backToMerchantLookup" type="button"
+                                    class="shrink-0 cursor-pointer border-0 bg-transparent p-1 text-[11px] font-semibold text-app-muted hover:text-app-text">
+                                    Changer
+                                </button>
+                            </div>
+
+                            @if ($coError)
+                                <div
+                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
+                                    <x-agent-icon name="warning" :size="14" />
+                                    {{ $coError }}
+                                </div>
+                            @endif
+
+                            <div>
+                                <label
+                                    class="mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                    Montant en KMF
+                                </label>
+
+                                <div class="relative">
+                                    <input type="number" wire:model.live="coAmount" min="1" placeholder="0"
+                                        class="box-border w-full rounded-[10px] border-2 border-app-border bg-app-surface py-3 pl-4 pr-14 font-mono text-xl font-bold tracking-[-0.02em] text-app-text outline-none focus:border-app-amber md:py-4 md:text-[28px]" />
+                                    <span
+                                        class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-app-muted">
+                                        KMF
+                                    </span>
+                                </div>
+
+                                <div class="mt-3 grid grid-cols-4 gap-2">
+                                    @foreach ([5000, 10000, 25000, 50000] as $quick)
+                                        <button wire:click="setCashOutAmount({{ $quick }})" type="button"
+                                            @class([
+                                                'cursor-pointer rounded-lg border-[1.5px] px-1 py-2 font-mono text-xs font-bold',
+                                                'border-app-amber bg-app-amber text-white' => (int) $coAmount === $quick,
+                                                'border-app-border bg-app-surface text-app-muted' =>
+                                                    (int) $coAmount !== $quick,
+                                            ])>
+                                            {{ number_format($quick, 0, ',', ' ') }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                                @error('coAmount')
+                                    <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <x-alert variant="warning" class="my-5" text-class="text-xs font-medium">
@@ -399,9 +433,13 @@
                             </x-alert>
 
                             <div class="flex justify-end">
-                                <button wire:click="confirmCashOut" wire:loading.attr="disabled" type="button"
+                                <button wire:click="confirmCashOut" wire:loading.attr="disabled"
+                                    wire:target="confirmCashOut" type="button"
                                     class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-amber p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-48">
-                                    <span wire:loading.remove wire:target="confirmCashOut">Continuer</span>
+                                    <span wire:loading.remove wire:target="confirmCashOut"
+                                        class="flex items-center gap-2">
+                                        Continuer
+                                    </span>
                                     <span wire:loading.flex wire:target="confirmCashOut"
                                         class="hidden items-center gap-2">
                                         <x-spinner :size="16" />
@@ -414,37 +452,54 @@
                         {{-- confirm step --}}
                     @elseif($coStep === 'confirm')
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
+                            <button wire:click="backToAmount" type="button"
+                                class="mb-5 flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-[13px] font-semibold text-app-muted">
+                                <x-agent-icon name="back" :size="16" />
+                                Retour
+                            </button>
+
                             <div class="mb-5">
                                 <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">Confirmer le
                                     Cash-out</div>
                                 <div class="text-xs text-app-muted">Vérifiez les détails avant de valider</div>
                             </div>
 
+                            @if ($coError)
+                                <div
+                                    class="mb-4 flex items-center gap-2 rounded-lg border border-app-red bg-app-red-bg px-3.5 py-2.5 text-[13px] text-app-red">
+                                    <x-agent-icon name="warning" :size="14" />
+                                    {{ $coError }}
+                                </div>
+                            @endif
+
                             <div
-                                class="mb-5 flex items-center gap-3 rounded-xl border-[1.5px] border-app-amber bg-app-amber-bg p-4">
+                                class="mb-5 flex items-start gap-3 rounded-xl border-[1.5px] border-app-amber bg-app-amber-bg p-4">
                                 <div
                                     class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px] bg-app-amber text-white">
                                     <x-agent-icon name="cash-out" :size="20" />
                                 </div>
 
-                                <div class="min-w-0">
+                                <div class="min-w-0 flex-1">
                                     <div class="text-[10px] font-bold uppercase tracking-[0.08em] text-app-muted">
                                         Marchand
                                     </div>
-                                    <div class="mt-0.5 truncate font-mono text-[11px] text-app-text">
-                                        {{ $coMerchantId }}
+                                    <div class="mt-0.5 truncate text-[13px] font-bold text-app-text">
+                                        {{ $coMerchant['businessName'] ?? '—' }}
+                                    </div>
+                                    <div class="font-mono text-[11px] text-app-muted">
+                                        {{ $coMerchant['externalRef'] ?? '' }} •
+                                        +{{ $coMerchant['phoneCountryCode'] ?? '' }} {{ $coMerchant['phoneNumber'] ?? '' }}
                                     </div>
                                 </div>
+
+                                <button wire:click="backToMerchantLookup" type="button"
+                                    class="shrink-0 cursor-pointer border-0 bg-transparent p-1 text-[11px] font-semibold text-app-muted hover:text-app-text">
+                                    Changer
+                                </button>
                             </div>
 
-                            @php
-                                $coFee = (int) floor((int) $coAmount * 0.01);
-                                $coComm = $coFee;
-                                $coNet = (int) $coAmount - $coFee;
-                            @endphp
-
                             <div class="mb-5 rounded-[10px] border border-app-border bg-app-bg p-3.5">
-                                <div class="mb-3.5 border-b border-app-border pb-3.5 text-center">
+                                <div class="text-center">
                                     <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
                                         Montant
                                     </div>
@@ -454,24 +509,8 @@
                                     </div>
                                 </div>
 
-                                <div class="flex justify-between border-b border-app-border py-1.5">
-                                    <span class="text-xs text-app-muted">Frais</span>
-                                    <span
-                                        class="font-mono text-xs font-semibold text-app-text">{{ number_format($coFee, 0, ',', ' ') }}
-                                        KMF</span>
-                                </div>
-
-                                <div class="flex justify-between border-b border-app-border py-1.5">
-                                    <span class="text-xs text-app-muted">Commission agent</span>
-                                    <span class="font-mono text-xs font-semibold text-app-green">+
-                                        {{ number_format($coComm, 0, ',', ' ') }} KMF</span>
-                                </div>
-
-                                <div class="flex justify-between py-1.5">
-                                    <span class="text-xs font-bold text-app-text">Net marchand</span>
-                                    <span
-                                        class="font-mono text-[13px] font-extrabold text-app-text">{{ number_format($coNet, 0, ',', ' ') }}
-                                        KMF</span>
+                                <div class="mt-3 border-t border-app-border pt-3 text-center text-[11px] text-app-muted">
+                                    Des frais et une commission peuvent s'appliquer. Le détail définitif sera affiché après confirmation.
                                 </div>
                             </div>
 
@@ -595,7 +634,7 @@
                         Saisissez la référence marchand, vérifiez le montant et confirmez l’opération.
                     </p>
 
-                    <x-alert variant="warning" class="border-0" :icon="false"
+                    <x-alert variant="neutral" class="border-0" :icon="false"
                         text-class="text-xs font-normal leading-relaxed">
                         Certains montants peuvent nécessiter une approbation backoffice.
                     </x-alert>

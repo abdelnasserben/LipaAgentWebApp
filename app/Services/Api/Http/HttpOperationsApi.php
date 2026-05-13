@@ -33,6 +33,26 @@ final class HttpOperationsApi implements OperationsApi
         return $this->client->data($response, 'CUSTOMER_NOT_FOUND');
     }
 
+    public function lookupMerchant(string $phoneCountryCode, string $phoneNumber): ?array
+    {
+        $response = $this->client->get('/api/v1/agent/merchants/lookup', [
+            'phoneCountryCode' => $phoneCountryCode,
+            'phoneNumber'      => $phoneNumber,
+        ]);
+
+        if ($response->status() === 404) {
+            $exception = $this->client->exceptionFromResponse($response, 'MERCHANT_NOT_FOUND');
+
+            if ($exception->apiCode() === 'MERCHANT_NOT_FOUND') {
+                return null;
+            }
+
+            throw $exception;
+        }
+
+        return $this->client->data($response, 'MERCHANT_NOT_FOUND');
+    }
+
     public function processCashIn(array $data): array
     {
         return $this->client->data(

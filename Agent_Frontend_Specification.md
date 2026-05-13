@@ -328,6 +328,8 @@ Dev behavior:
 | Cash-out | withdraw merchant funds through the Agent; large cash-out can create a pending approval |
 | Customer onboarding | enroll a customer and upload/list KYC documents for that customer |
 | Customer lookup | look up a customer by phone for pre-transaction confirmation |
+| Merchant lookup | look up a merchant by phone for pre-cash-out confirmation |
+| Card lookup | look up a card by scanned NFC UID before report-lost / report-stolen / replace |
 | Cards | list assigned card stock, sell a card, report a customer card lost/stolen, replace a customer card |
 | Commissions | list own commission payout history |
 | History | list own wallet-scoped transactions, view own transaction detail, list own ledger statement |
@@ -374,6 +376,8 @@ Dev behavior:
 | Method | Path | Auth | Headers | Query | Request | Response | Primary errors | Frontend notes |
 |---|---|---|---|---|---|---|---|---|
 | GET | `/api/v1/agent/lookup?phoneCountryCode&phoneNumber` | Agent JWT | `Authorization` | `phoneCountryCode`, `phoneNumber` | query | `200 ApiResponse<CustomerLookupResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 CUSTOMER_NOT_FOUND` | Minimal customer projection for pre-transaction confirmation. |
+| GET | `/api/v1/agent/merchants/lookup?phoneCountryCode&phoneNumber` | Agent JWT | `Authorization` | `phoneCountryCode`, `phoneNumber` | query | `200 ApiResponse<MerchantLookupResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 MERCHANT_NOT_FOUND` | Minimal merchant projection for pre-cash-out confirmation. Resolves `merchantId` for subsequent `cash-out`. |
+| GET | `/api/v1/agent/cards/lookup?nfcUid` | Agent JWT | `Authorization` | `nfcUid` (14 hex chars) | query | `200 ApiResponse<CardLookupResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 CARD_NOT_FOUND` | Minimal card projection by scanned NFC UID. Returns `cardId` and `customerId` (when linked) for subsequent report-lost / report-stolen / replace flows. Never returns PIN or auth-key material. |
 | POST | `/api/v1/agent/cash-in` | Agent JWT | `Authorization`, `Idempotency-Key`, optional `X-Correlation-Id` | none | `AgentCashInRequest` | `200 ApiResponse<AgentTransactionResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 CUSTOMER_NOT_FOUND`, `404 WALLET_NOT_FOUND`, `409 DUPLICATE_IDEMPOTENCY_KEY`, `422 WALLET_FROZEN`, `422 WALLET_SUSPENDED`, `422 WALLET_CLOSED`, `422 INSUFFICIENT_BALANCE`, `422 CONFIG_LIMIT_PROFILE_NOT_FOUND`, `422 CONFIG_RULE_INACTIVE`, `422 LIMIT_EXCEEDED` | Agent wallet is debited; customer wallet is credited. |
 | POST | `/api/v1/agent/cash-out` | Agent JWT | `Authorization`, `Idempotency-Key`, optional `X-Correlation-Id` | none | `AgentCashOutRequest` | `200 ApiResponse<AgentCashOutResponse>` or `202 ApiResponse<AgentCashOutResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 MERCHANT_NOT_FOUND`, `404 WALLET_NOT_FOUND`, `409 DUPLICATE_IDEMPOTENCY_KEY`, `422 ACTOR_SUSPENDED`, `422 CASH_OUT_NOT_ALLOWED`, `422 APPROVAL_REQUIRED`, `422 INSUFFICIENT_BALANCE`, `422 CONFIG_LIMIT_PROFILE_NOT_FOUND`, `422 CONFIG_RULE_INACTIVE`, `422 LIMIT_EXCEEDED` | `202` means a `LARGE_CASH_OUT` approval was created and no wallet movement happened yet. |
 
@@ -738,6 +742,26 @@ CustomerLookupResponse = {
   status: CustomerStatus;
   kycLevel: KycLevel;
 }
+
+MerchantLookupResponse = {
+  merchantId: uuid;
+  externalRef: string;            // e.g. "MCH-12345"
+  businessName: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+  status: MerchantStatus;
+  kycLevel: KycLevel;
+  canCashOut: boolean;
+}
+
+CardLookupResponse = {
+  cardId: uuid;
+  nfcUid: string;                 // 14 uppercase hex chars
+  cardType: CardType;
+  status: CardStatus;
+  customerId: uuid | null;        // null when the card is not yet linked
+  expiresAt: date | null;         // ISO-8601 calendar date
+}
 ```
 
 ### 7.5 Cards, Stock, Commissions
@@ -1020,6 +1044,8 @@ For KYC document upload, send `multipart/form-data` with exactly these frontend-
 | Agent commissions | `agentportal.api.AgentCommissionController`, `AgentCommissionResponse`, `fee.domain.CommissionPayout` |
 | Cash-in and cash-out | `transaction.api.AgentTransactionController`, `CashInUseCase`, `CashOutSubmissionUseCase`, `CashOutUseCase` |
 | Customer lookup | `transaction.api.AgentTransactionController`, `CustomerLookupResponse` |
+| Merchant lookup | `transaction.api.AgentTransactionController`, `MerchantLookupResponse` |
+| Card lookup | `transaction.api.AgentTransactionController`, `CardLookupResponse` |
 | Customer enrollment | `identity.api.AgentEnrollmentController`, `EnrollCustomerUseCase`, `EnrollCustomerRequest`, `EnrollCustomerResponse` |
 | KYC documents | `kyc.api.AgentKycController`, `KycDocumentResponse`, `StoreKycDocumentUseCase` |
 | Card stock | `card.api.AgentCardStockController`, `card.domain.CardStock`, `CardStockStatus` |

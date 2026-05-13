@@ -26,9 +26,11 @@ class Cards extends Component
 
     public ?string $apiError = null;
 
-    // Shared form state (customer + card identifiers).
-    public string $customerId = '';
-    public string $cardId     = '';
+    // Card lookup state (shared between report-lost/stolen and replace tabs).
+    public string $cardNfcUid = '';
+    /** @var array<string, mixed>|null */
+    public ?array $lookedUpCard = null;
+    public ?string $cardLookupError = null;
 
     // Replace-only state.
     public string $stockId        = '';
@@ -74,6 +76,9 @@ class Cards extends Component
 
         $this->activeTab  = $tab;
         $this->lastResult = null;
+        $this->lookedUpCard = null;
+        $this->cardNfcUid = '';
+        $this->cardLookupError = null;
         $this->clearApiError();
         $this->resetValidation();
     }
@@ -195,34 +200,94 @@ class Cards extends Component
         $this->resetValidation();
     }
 
+    // ── Card lookup (shared by report + replace) ──────────────
+
+    public function lookupCard(CardApi $cards): void
+    {
+        $this->validate([
+            'cardNfcUid' => 'required|regex:/^[0-9A-Fa-f]{14}$/',
+        ], [
+            'cardNfcUid.required' => 'Le NFC UID est requis.',
+            'cardNfcUid.regex'    => 'NFC UID invalide (14 caractères hexadécimaux).',
+        ]);
+
+        $this->cardLookupError = null;
+        $this->lookedUpCard = null;
+        $this->lastResult = null;
+        $this->clearApiError();
+
+        try {
+            $card = $cards->lookupCard(strtoupper($this->cardNfcUid));
+        } catch (ApiException $exception) {
+            $this->showApiError($exception, 'cardLookupError');
+            return;
+        }
+
+        if (! $card) {
+            $this->cardLookupError = 'Aucune carte trouvée pour ce NFC UID.';
+            return;
+        }
+
+        $status = (string) ($card['status'] ?? '');
+        if (in_array($status, ['CLOSED', 'EXPIRED'], true)) {
+            $this->cardLookupError = 'Cette carte n’est plus utilisable (' . $status . ').';
+            return;
+        }
+
+        if (empty($card['customerId'])) {
+            $this->cardLookupError = 'Cette carte n’est rattachée à aucun client.';
+            return;
+        }
+
+        $this->lookedUpCard = $card;
+    }
+
+    public function clearCardLookup(): void
+    {
+        $this->lookedUpCard = null;
+        $this->cardNfcUid = '';
+        $this->cardLookupError = null;
+        $this->lastResult = null;
+        $this->resetValidation();
+    }
+
     public function reportCard(CardApi $cards): void
     {
-        $this->validateIdentifiers();
+        if (! is_array($this->lookedUpCard) || empty($this->lookedUpCard['cardId']) || empty($this->lookedUpCard['customerId'])) {
+            $this->cardLookupError = 'Recherchez et confirmez une carte avant de continuer.';
+            return;
+        }
+
         $this->clearApiError();
 
         try {
             $this->lastResult = $this->reportStatus === 'stolen'
-                ? $cards->reportStolen($this->customerId, $this->cardId)
-                : $cards->reportLost($this->customerId, $this->cardId);
+                ? $cards->reportStolen((string) $this->lookedUpCard['customerId'], (string) $this->lookedUpCard['cardId'])
+                : $cards->reportLost((string) $this->lookedUpCard['customerId'], (string) $this->lookedUpCard['cardId']);
         } catch (ApiException $exception) {
             $this->showApiError($exception);
+            return;
         }
+
+        $this->cardNfcUid = '';
+        $this->lookedUpCard = null;
+        $this->cardLookupError = null;
+        $this->resetValidation();
     }
 
     public function replaceCard(CardApi $cards): void
     {
+        if (! is_array($this->lookedUpCard) || empty($this->lookedUpCard['cardId']) || empty($this->lookedUpCard['customerId'])) {
+            $this->cardLookupError = 'Recherchez et confirmez une carte avant de continuer.';
+            return;
+        }
+
         $this->validate(
             [
-                'customerId'     => 'required|uuid',
-                'cardId'         => 'required|uuid',
                 'stockId'        => 'required|uuid',
                 'replacementFee' => 'required|integer|min:1',
             ],
             [
-                'customerId.required'     => "L'identifiant client est requis.",
-                'customerId.uuid'         => "L'identifiant client doit être un UUID.",
-                'cardId.required'         => "L'identifiant carte est requis.",
-                'cardId.uuid'             => "L'identifiant carte doit être un UUID.",
                 'stockId.required'        => 'Sélectionnez une carte de stock.',
                 'stockId.uuid'            => "L'identifiant de stock doit être un UUID.",
                 'replacementFee.required' => 'Le montant du frais de remplacement est requis.',
@@ -234,40 +299,44 @@ class Cards extends Component
         $this->clearApiError();
 
         try {
-            $this->lastResult = $cards->replaceCard($this->customerId, $this->cardId, [
-                'stockId'        => $this->stockId,
-                'replacementFee' => (int) $this->replacementFee,
-            ]);
+            $this->lastResult = $cards->replaceCard(
+                (string) $this->lookedUpCard['customerId'],
+                (string) $this->lookedUpCard['cardId'],
+                [
+                    'stockId'        => $this->stockId,
+                    'replacementFee' => (int) $this->replacementFee,
+                ],
+            );
         } catch (ApiException $exception) {
             $this->showApiError($exception);
+            return;
         }
+
+        // Refresh stock so the consumed card disappears from the list.
+        try {
+            $this->cardStock = $cards->getCardStock();
+        } catch (ApiException) {
+            // Non-fatal — keep the current list.
+        }
+
+        $this->cardNfcUid      = '';
+        $this->lookedUpCard    = null;
+        $this->cardLookupError = null;
+        $this->stockId         = '';
+        $this->replacementFee  = '';
+        $this->resetValidation();
     }
 
     public function resetForm(): void
     {
         $this->lastResult     = null;
-        $this->customerId     = '';
-        $this->cardId         = '';
+        $this->cardNfcUid     = '';
+        $this->lookedUpCard   = null;
+        $this->cardLookupError = null;
         $this->stockId        = '';
         $this->replacementFee = '';
         $this->clearApiError();
         $this->resetValidation();
-    }
-
-    private function validateIdentifiers(): void
-    {
-        $this->validate(
-            [
-                'customerId' => 'required|uuid',
-                'cardId'     => 'required|uuid',
-            ],
-            [
-                'customerId.required' => "L'identifiant client est requis.",
-                'customerId.uuid'     => "L'identifiant client doit être un UUID.",
-                'cardId.required'     => "L'identifiant carte est requis.",
-                'cardId.uuid'         => "L'identifiant carte doit être un UUID.",
-            ],
-        );
     }
 
     public function render(): \Illuminate\View\View

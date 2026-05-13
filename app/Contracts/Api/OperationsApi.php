@@ -10,6 +10,13 @@ interface OperationsApi
     public function lookupCustomer(string $phoneCountryCode, string $phoneNumber): ?array;
 
     /**
+     * GET /api/v1/agent/merchants/lookup — minimal merchant projection for pre-cash-out confirmation.
+     *
+     * @return array<string, mixed>|null MerchantLookupResponse, or null when MERCHANT_NOT_FOUND.
+     */
+    public function lookupMerchant(string $phoneCountryCode, string $phoneNumber): ?array;
+
+    /**
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */

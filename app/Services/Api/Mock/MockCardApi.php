@@ -15,6 +15,46 @@ final class MockCardApi implements CardApi
         return FixtureLoader::load('cards/stock');
     }
 
+    public function lookupCard(string $nfcUid): ?array
+    {
+        if (! preg_match('/^[0-9A-Fa-f]{14}$/', $nfcUid)) {
+            return null;
+        }
+
+        $upper = strtoupper($nfcUid);
+
+        // Match assigned stock first — those cards are not yet linked to a customer.
+        foreach (FixtureLoader::load('cards/stock') as $stock) {
+            if (strtoupper((string) ($stock['nfcUid'] ?? '')) === $upper) {
+                return [
+                    'cardId'     => (string) $stock['id'],
+                    'nfcUid'     => $upper,
+                    'cardType'   => 'STANDARD',
+                    'status'     => 'ISSUED',
+                    'customerId' => null,
+                    'expiresAt'  => null,
+                ];
+            }
+        }
+
+        // Deterministic mock: UIDs starting with "FF" are not found.
+        if (str_starts_with($upper, 'FF')) {
+            return null;
+        }
+
+        $known = FixtureLoader::load('customers/known');
+        $customer = $known[abs(crc32($upper)) % max(1, count($known))] ?? null;
+
+        return [
+            'cardId'     => 'crd_' . substr(md5($upper), 0, 22),
+            'nfcUid'     => $upper,
+            'cardType'   => 'STANDARD',
+            'status'     => 'ACTIVE',
+            'customerId' => is_array($customer) ? (string) ($customer['customerId'] ?? '') : null,
+            'expiresAt'  => now()->addYears(2)->toDateString(),
+        ];
+    }
+
     public function sellCard(array $data): array
     {
         $price = (int) ($data['cardPrice'] ?? 0);

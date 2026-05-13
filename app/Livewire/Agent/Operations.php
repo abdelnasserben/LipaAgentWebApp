@@ -31,8 +31,10 @@ class Operations extends Component
     public ?string $ciError = null;
 
     // Cash-out state
-    public string $coStep = 'form';
-    public string $coMerchantId = '';
+    public string $coStep = 'lookup'; // lookup | amount | confirm | success
+    public string $coPhoneCountryCode = '269';
+    public string $coPhoneNumber = '';
+    public ?array $coMerchant = null;
     public string $coAmount = '';
     public ?array $coResult = null;
     public ?string $coError = null;
@@ -141,19 +143,74 @@ class Operations extends Component
 
     // ── Cash-out ──────────────────────────────────────────
 
+    public function lookupMerchant(OperationsApi $operations): void
+    {
+        $this->validate([
+            'coPhoneNumber' => 'required|regex:/^\d{4,15}$/',
+        ], [
+            'coPhoneNumber.required' => 'Le numéro est requis.',
+            'coPhoneNumber.regex'    => 'Numéro invalide (4 à 15 chiffres).',
+        ]);
+
+        $this->coError = null;
+
+        try {
+            $merchant = $operations->lookupMerchant($this->coPhoneCountryCode, $this->coPhoneNumber);
+        } catch (ApiException $exception) {
+            $this->showApiError($exception, 'coError');
+
+            return;
+        }
+
+        if (! $merchant) {
+            $this->coError = 'Marchand introuvable pour ce numéro.';
+            return;
+        }
+
+        $status = (string) ($merchant['status'] ?? '');
+        if (in_array($status, ['SUSPENDED', 'CLOSED', 'PENDING_KYC'], true)) {
+            $this->coError = 'Ce marchand n’est pas actif.';
+            return;
+        }
+
+        if (array_key_exists('canCashOut', $merchant) && $merchant['canCashOut'] === false) {
+            $this->coError = 'Le cash-out n’est pas autorisé pour ce marchand.';
+            return;
+        }
+
+        $this->coMerchant = $merchant;
+        $this->coStep = 'amount';
+    }
+
+    public function backToMerchantLookup(): void
+    {
+        $this->coStep = 'lookup';
+        $this->coMerchant = null;
+        $this->coError = null;
+        $this->resetValidation();
+    }
+
+    public function setCashOutAmount(int $amount): void
+    {
+        $this->coAmount = (string) $amount;
+    }
+
     public function confirmCashOut(): void
     {
+        if (! is_array($this->coMerchant) || empty($this->coMerchant['merchantId'])) {
+            $this->coError = 'Sélectionnez un marchand.';
+            $this->coStep = 'lookup';
+            return;
+        }
+
         $this->validate(
             [
-                'coMerchantId' => 'required|uuid',
-                'coAmount'     => 'required|integer|min:1',
+                'coAmount' => 'required|integer|min:1',
             ],
             [
-                'coMerchantId.required' => "L'identifiant marchand est requis.",
-                'coMerchantId.uuid'     => "L'identifiant marchand doit être un UUID valide.",
-                'coAmount.required'     => 'Le montant est requis.',
-                'coAmount.integer'      => 'Montant invalide.',
-                'coAmount.min'          => 'Le montant doit être supérieur à 0.',
+                'coAmount.required' => 'Le montant est requis.',
+                'coAmount.integer'  => 'Montant invalide.',
+                'coAmount.min'      => 'Le montant doit être supérieur à 0.',
             ],
         );
 
@@ -161,13 +218,25 @@ class Operations extends Component
         $this->coStep  = 'confirm';
     }
 
+    public function backToAmount(): void
+    {
+        $this->coStep = 'amount';
+        $this->coError = null;
+    }
+
     public function submitCashOut(OperationsApi $operations): void
     {
+        if (! is_array($this->coMerchant) || empty($this->coMerchant['merchantId'])) {
+            $this->coError = 'Sélectionnez un marchand.';
+            $this->coStep = 'lookup';
+            return;
+        }
+
         $this->coError = null;
 
         try {
             $result = $operations->processCashOut([
-                'merchantId' => $this->coMerchantId,
+                'merchantId' => (string) $this->coMerchant['merchantId'],
                 'amount'     => (int) $this->coAmount,
             ]);
         } catch (ApiException $exception) {
@@ -189,12 +258,14 @@ class Operations extends Component
 
     public function resetCashOut(): void
     {
-        $this->coStep = 'form';
-        $this->coMerchantId = '';
+        $this->coStep = 'lookup';
+        $this->coPhoneNumber = '';
+        $this->coMerchant = null;
         $this->coAmount = '';
         $this->coResult = null;
         $this->coError = null;
         $this->coStatus = 200;
+        $this->resetValidation();
     }
 
     public function render(): \Illuminate\View\View
