@@ -561,6 +561,140 @@
                             </div>
                         </div>
 
+                        {{-- pin step (PENDING_PIN) --}}
+                    @elseif($coStep === 'pin')
+                        <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
+                            <div class="mb-5">
+                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">
+                                    PIN marchand requis
+                                </div>
+                                <div class="text-xs text-app-muted">
+                                    Demandez au marchand de saisir son PIN sur cet appareil pour valider l'opération.
+                                </div>
+                            </div>
+
+                            @if ($coPinError)
+                                <x-alert variant="danger" class="mb-4"
+                                    text-class="text-[13px] font-normal leading-relaxed">
+                                    {{ $coPinError }}
+                                </x-alert>
+                            @endif
+
+                            <div class="mb-5 rounded-[10px] border border-app-border bg-app-bg p-3.5 text-center">
+                                <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                    Montant
+                                </div>
+                                <div class="font-mono text-2xl font-extrabold tracking-[-0.02em] text-app-text">
+                                    {{ number_format((int) $coAmount, 0, ',', ' ') }}
+                                    <span class="text-sm font-medium text-app-muted">KMF</span>
+                                </div>
+                                @if (! is_null($coMatchedThreshold))
+                                    <div class="mt-2 text-[11px] text-app-muted">
+                                        Seuil PIN dépassé :
+                                        {{ number_format($coMatchedThreshold, 0, ',', ' ') }} KMF
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="mb-2">
+                                <label for="coMerchantPin"
+                                    class="mb-1.5 block text-[12px] font-semibold text-app-muted">
+                                    PIN marchand (4 à 8 chiffres)
+                                </label>
+                                <input id="coMerchantPin" wire:model.defer="coMerchantPin" type="password"
+                                    inputmode="numeric" autocomplete="off" maxlength="8"
+                                    autocorrect="off" autocapitalize="off" spellcheck="false"
+                                    class="w-full rounded-[10px] border border-app-border bg-app-bg p-3 text-center font-mono text-xl tracking-[0.4em] text-app-text outline-none focus:border-app-accent" />
+                                @error('coMerchantPin')
+                                    <div class="mt-1 text-[12px] text-red-500">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-4 text-[11px] text-app-muted">
+                                Politique : 3 échecs verrouillent le PIN marchand pendant 15 minutes.
+                                Le PIN n'est jamais enregistré côté Agent.
+                            </div>
+
+                            <div class="grid gap-2.5 md:flex md:justify-end">
+                                <button wire:click="resetCashOut" type="button"
+                                    class="order-2 w-full cursor-pointer rounded-[10px] border-[1.5px] border-app-border bg-transparent p-3 text-sm font-semibold text-app-muted md:order-1 md:w-auto md:min-w-36">
+                                    Annuler
+                                </button>
+
+                                <button wire:click="submitMerchantPin" wire:loading.attr="disabled" type="button"
+                                    class="order-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-amber p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:order-2 md:w-auto md:min-w-48">
+                                    <span wire:loading.remove wire:target="submitMerchantPin"
+                                        class="flex items-center gap-2">
+                                        <x-agent-icon name="check" :size="16" />
+                                        Valider le PIN
+                                    </span>
+                                    <span wire:loading.flex wire:target="submitMerchantPin"
+                                        class="hidden items-center gap-2">
+                                        <x-spinner :size="16" />
+                                        Vérification…
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- confirmation step (PENDING_CONFIRMATION) --}}
+                    @elseif($coStep === 'confirmation')
+                        <div class="rounded-xl border border-app-border bg-app-surface p-4 md:p-5">
+                            <div class="mb-5">
+                                <div class="mb-1 text-[15px] font-bold text-app-text md:text-base">
+                                    Confirmation requise
+                                </div>
+                                <div class="text-xs text-app-muted">
+                                    Le montant dépasse le seuil de confirmation. Vérifiez avant de poursuivre.
+                                </div>
+                            </div>
+
+                            @if ($coError)
+                                <x-alert variant="danger" class="mb-4"
+                                    text-class="text-[13px] font-normal leading-relaxed">
+                                    {{ $coError }}
+                                </x-alert>
+                            @endif
+
+                            <div class="mb-5 rounded-[10px] border border-app-border bg-app-bg p-3.5 text-center">
+                                <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                    Montant
+                                </div>
+                                <div class="font-mono text-2xl font-extrabold tracking-[-0.02em] text-app-text">
+                                    {{ number_format((int) $coAmount, 0, ',', ' ') }}
+                                    <span class="text-sm font-medium text-app-muted">KMF</span>
+                                </div>
+                                @if (! is_null($coMatchedThreshold))
+                                    <div class="mt-2 text-[11px] text-app-muted">
+                                        Seuil de confirmation :
+                                        {{ number_format($coMatchedThreshold, 0, ',', ' ') }} KMF
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="grid gap-2.5 md:flex md:justify-end">
+                                <button wire:click="resetCashOut" type="button"
+                                    class="order-2 w-full cursor-pointer rounded-[10px] border-[1.5px] border-app-border bg-transparent p-3 text-sm font-semibold text-app-muted md:order-1 md:w-auto md:min-w-36">
+                                    Annuler
+                                </button>
+
+                                <button wire:click="acknowledgeConfirmation" wire:loading.attr="disabled"
+                                    type="button"
+                                    class="order-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-amber p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:order-2 md:w-auto md:min-w-48">
+                                    <span wire:loading.remove wire:target="acknowledgeConfirmation"
+                                        class="flex items-center gap-2">
+                                        <x-agent-icon name="check" :size="16" />
+                                        Confirmer et poursuivre
+                                    </span>
+                                    <span wire:loading.flex wire:target="acknowledgeConfirmation"
+                                        class="hidden items-center gap-2">
+                                        <x-spinner :size="16" />
+                                        Traitement…
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
                         {{-- success step --}}
                     @elseif($coStep === 'success')
                         <div class="rounded-xl border border-app-border bg-app-surface p-4 text-center md:p-5">

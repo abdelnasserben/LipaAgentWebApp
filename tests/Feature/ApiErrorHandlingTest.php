@@ -214,13 +214,13 @@ class ApiErrorHandlingTest extends TestCase
         (new HttpOperationsApi(app(KomopayClient::class)))->processCashOut([
             'merchantId' => 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
             'amount' => 50000,
-        ]);
+        ], 'fixed-idempotency-key');
 
         Http::assertSent(function ($request): bool {
-            $hasIdempotency = ! empty($request->header('Idempotency-Key')[0] ?? '');
+            $idempotencyKey = $request->header('Idempotency-Key')[0] ?? '';
             $body = $request->data();
 
-            return $hasIdempotency
+            return $idempotencyKey === 'fixed-idempotency-key'
                 && $body['merchantId'] === 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
                 && $body['amount'] === 50000;
         });

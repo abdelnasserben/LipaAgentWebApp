@@ -5,11 +5,17 @@ declare(strict_types=1);
 namespace App\Services\Api\Mock;
 
 use App\Contracts\Api\OperationsApi;
+use App\Exceptions\ApiException;
 use App\Services\Api\Support\FixtureLoader;
 use Illuminate\Support\Str;
 
 final class MockOperationsApi implements OperationsApi
 {
+    private const MOCK_MERCHANT_PIN = '1234';
+
+    /** @var array<string, int> */
+    private static array $mockPinAttempts = [];
+
     public function lookupCustomer(string $phoneCountryCode, string $phoneNumber): ?array
     {
         $known = FixtureLoader::load('customers/known');
@@ -92,17 +98,17 @@ final class MockOperationsApi implements OperationsApi
         ];
     }
 
-    public function processCashOut(array $data): array
+    public function processCashOut(array $data, string $idempotencyKey): array
     {
         $amount     = (int) ($data['amount'] ?? 0);
-        $pending    = $amount > 100000;
+        $merchantId = (string) ($data['merchantId'] ?? '');
 
-        if ($pending) {
-            // Spec §8.1: PENDING_APPROVAL response carries no transactionId/fees,
-            // only approvalId, requestedAmount, currency and status.
+        // Mock control thresholds (priority: Approval > PIN > Confirmation).
+        if ($amount > 200000) {
             return [
                 'status' => 202,
                 'data'   => [
+                    'outcome'         => 'PENDING_APPROVAL',
                     'transactionId'   => null,
                     'status'          => 'PENDING_APPROVAL',
                     'approvalId'      => (string) Str::uuid(),
@@ -112,11 +118,42 @@ final class MockOperationsApi implements OperationsApi
             ];
         }
 
+        if ($amount > 100000) {
+            // PIN tier: require merchantPin.
+            if (! array_key_exists('merchantPin', $data) || $data['merchantPin'] === null || $data['merchantPin'] === '') {
+                return [
+                    'status' => 202,
+                    'data'   => [
+                        'outcome'                => 'PENDING_PIN',
+                        'requestedAmount'        => $amount,
+                        'matchedThresholdAmount' => 100000,
+                        'currency'               => 'KMF',
+                    ],
+                ];
+            }
+
+            $this->verifyMockMerchantPin($merchantId, (string) $data['merchantPin']);
+        } elseif ($amount > 50000) {
+            // Confirmation tier: require confirmationAcknowledged=true.
+            if (($data['confirmationAcknowledged'] ?? false) !== true) {
+                return [
+                    'status' => 202,
+                    'data'   => [
+                        'outcome'                => 'PENDING_CONFIRMATION',
+                        'requestedAmount'        => $amount,
+                        'matchedThresholdAmount' => 50000,
+                        'currency'               => 'KMF',
+                    ],
+                ];
+            }
+        }
+
         $feeAmount  = (int) floor($amount * 0.01);
         $commission = (int) floor($amount * 0.01);
         $net        = $amount - $feeAmount;
 
         return [
+            'outcome'                => 'EXECUTED',
             'transactionId'          => (string) Str::uuid(),
             'status'                 => 'COMPLETED',
             'requestedAmount'        => $amount,
@@ -127,5 +164,22 @@ final class MockOperationsApi implements OperationsApi
             'completedAt'            => now()->toIso8601ZuluString(),
             'replayed'               => false,
         ];
+    }
+
+    private function verifyMockMerchantPin(string $merchantId, string $merchantPin): void
+    {
+        $key = $merchantId !== '' ? $merchantId : 'unknown';
+        $attempts = self::$mockPinAttempts[$key] ?? 0;
+
+        if ($attempts >= 3) {
+            throw new ApiException('AUTH_PIN_LOCKED', 422);
+        }
+
+        if ($merchantPin !== self::MOCK_MERCHANT_PIN) {
+            self::$mockPinAttempts[$key] = $attempts + 1;
+            throw new ApiException('AUTH_PIN_INVALID', 401);
+        }
+
+        unset(self::$mockPinAttempts[$key]);
     }
 }

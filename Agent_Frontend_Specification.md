@@ -532,7 +532,9 @@ AgentCashInRequest = {
 
 AgentCashOutRequest = {
   merchantId: uuid;
-  amount: long;              // strictly positive
+  amount: long;                       // strictly positive
+  merchantPin?: string;               // merchant's auth PIN, typed by the merchant on the Agent device when the control threshold requires a PIN; verified server-side, wrong PIN rejects with 401 AUTH_PIN_INVALID
+  confirmationAcknowledged?: boolean; // set true to clear PENDING_CONFIRMATION
 }
 ```
 
@@ -666,10 +668,12 @@ AgentTransactionResponse = {
 }
 
 AgentCashOutResponse = {
-  transactionId?: uuid;
-  status: string;            // TransactionStatus or ApprovalStatus
-  approvalId?: uuid;
+  outcome: "EXECUTED" | "PENDING_PIN" | "PENDING_CONFIRMATION" | "PENDING_APPROVAL";
+  transactionId?: uuid;             // only when outcome=EXECUTED
+  status?: string;                  // TransactionStatus when EXECUTED, ApprovalStatus when PENDING_APPROVAL
+  approvalId?: uuid;                // only when outcome=PENDING_APPROVAL
   requestedAmount?: long;
+  matchedThresholdAmount?: long;    // populated on PENDING_PIN / PENDING_CONFIRMATION / PENDING_APPROVAL
   feeAmount?: long;
   commissionAmount?: long;
   netAmountToDestination?: long;
@@ -844,19 +848,21 @@ Agent endpoints do not return `ApprovalRequestResponse.payload`.
 
 No Agent-readable approval payload schema is part of the Agent frontend contract.
 
-`POST /api/v1/agent/cash-out` can create a `LARGE_CASH_OUT` approval internally when a control threshold requires approval. The Agent response is limited to:
+`POST /api/v1/agent/cash-out` is gated by the cash-out control threshold with priority Approval > PIN > Confirmation. Depending on the configured threshold and amount the response may be any of:
 
 ```ts
-AgentCashOutResponse = {
-  transactionId: null;
-  status: "PENDING_APPROVAL";
-  approvalId: uuid;
-  requestedAmount: long;
-  currency: "KMF";
-}
+// Approval tier (LARGE_CASH_OUT) — Agent cannot act on the approval.
+{ outcome: "PENDING_APPROVAL", status: "PENDING_APPROVAL", approvalId, requestedAmount, currency: "KMF" }
+
+// PIN tier — ask the merchant to type their auth PIN on the Agent device,
+// resubmit POST /agent/cash-out with the same Idempotency-Key and merchantPin=<rawPin>.
+{ outcome: "PENDING_PIN", requestedAmount, matchedThresholdAmount, currency: "KMF" }
+
+// Confirmation tier — show the matched threshold and resubmit with confirmationAcknowledged=true.
+{ outcome: "PENDING_CONFIRMATION", requestedAmount, matchedThresholdAmount, currency: "KMF" }
 ```
 
-The Agent frontend cannot approve, reject, list, or inspect approval payloads.
+A wrong `merchantPin` returns `401 AUTH_PIN_INVALID`; 3 wrong attempts lock the merchant for 15 min (`422 AUTH_PIN_LOCKED`). The Agent frontend cannot approve, reject, list, or inspect approval payloads.
 
 ---
 
@@ -962,9 +968,11 @@ Cash-in flow:
 Cash-out flow:
 
 - Call `POST /api/v1/agent/cash-out` with `Idempotency-Key`.
-- `200` means the cash-out executed and wallet movement completed.
-- `202` means a `LARGE_CASH_OUT` approval was created; the Agent frontend receives `approvalId` but cannot act on the approval.
-- Merchant wallet is debited and Agent wallet is credited only on execution.
+- `200 outcome=EXECUTED` → the cash-out executed and wallet movement completed.
+- `202 outcome=PENDING_APPROVAL` → a `LARGE_CASH_OUT` approval was created; the Agent frontend receives `approvalId` but cannot act on it. No retry is possible client-side.
+- `202 outcome=PENDING_PIN` → ask the merchant to enter their auth PIN on the Agent device; resubmit `POST /agent/cash-out` with the **same `Idempotency-Key`** and `merchantPin=<rawPin>`. Backend verifies server-side; wrong PIN returns `401 AUTH_PIN_INVALID` (3 strikes → `422 AUTH_PIN_LOCKED`, 15 min).
+- `202 outcome=PENDING_CONFIRMATION` → show the matched threshold and resubmit with the **same `Idempotency-Key`** and `confirmationAcknowledged=true`.
+- Merchant wallet is debited and Agent wallet is credited only on execution. No transaction, wallet movement, or ledger entry is created while paused at PIN / confirmation / approval.
 
 Customer onboarding flow:
 
@@ -1001,7 +1009,7 @@ Idempotency behavior:
 
 - For completed transaction paths, a reused key returns the previous transaction response with `replayed=true`.
 - A concurrent duplicate key can return `409 DUPLICATE_IDEMPOTENCY_KEY`; retrying with the same key can then hit the replay path.
-- Cash-out responses that require approval return `202` with `approvalId`; no transaction response exists until the approval is executed.
+- Cash-out responses that pause at a control tier (`PENDING_APPROVAL` / `PENDING_PIN` / `PENDING_CONFIRMATION`) return `202`; no transaction is created until the resolved control is satisfied. For PIN / confirmation tiers the client retries with the **same** `Idempotency-Key` carrying `merchantPin` or `confirmationAcknowledged`.
 
 No other Agent endpoint in this specification requires `Idempotency-Key`.
 

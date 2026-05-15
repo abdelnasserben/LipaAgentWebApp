@@ -26,10 +26,14 @@ interface OperationsApi
      * Process a cash-out request.
      *
      * Returns either the completed transaction payload directly, OR a wrapper
-     * `['status' => 202, 'data' => array]` when the transaction is pending approval.
+     * `['status' => 202, 'data' => array]` when the cash-out is paused at a
+     * control tier (PENDING_PIN / PENDING_CONFIRMATION / PENDING_APPROVAL).
+     *
+     * The same `$idempotencyKey` must be reused for PENDING_PIN / PENDING_CONFIRMATION
+     * resubmissions, carrying `merchantPin` or `confirmationAcknowledged=true`.
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    public function processCashOut(array $data): array;
+    public function processCashOut(array $data, string $idempotencyKey): array;
 }

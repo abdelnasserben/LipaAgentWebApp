@@ -56,28 +56,26 @@ final class HttpOperationsApi implements OperationsApi
     public function processCashIn(array $data): array
     {
         return $this->client->data(
-            $this->client->post('/api/v1/agent/cash-in', $data, $this->idempotencyHeaders()),
+            $this->client->post('/api/v1/agent/cash-in', $data, ['Idempotency-Key' => (string) Str::uuid()]),
             'VALIDATION_ERROR',
         );
     }
 
-    public function processCashOut(array $data): array
+    public function processCashOut(array $data, string $idempotencyKey): array
     {
-        $response = $this->client->post('/api/v1/agent/cash-out', $data, $this->idempotencyHeaders());
-        $data = $this->client->data($response, 'VALIDATION_ERROR');
+        $fallback = array_key_exists('merchantPin', $data) ? 'AUTH_PIN_INVALID' : 'VALIDATION_ERROR';
+
+        $response = $this->client->post(
+            '/api/v1/agent/cash-out',
+            $data,
+            ['Idempotency-Key' => $idempotencyKey],
+        );
+        $payload = $this->client->data($response, $fallback);
 
         if ($response->status() === 202) {
-            return ['status' => 202, 'data' => $data];
+            return ['status' => 202, 'data' => $payload];
         }
 
-        return $data;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function idempotencyHeaders(): array
-    {
-        return ['Idempotency-Key' => (string) Str::uuid()];
+        return $payload;
     }
 }

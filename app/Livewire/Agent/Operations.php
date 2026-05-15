@@ -7,6 +7,7 @@ namespace App\Livewire\Agent;
 use App\Contracts\Api\OperationsApi;
 use App\Exceptions\ApiException;
 use App\Livewire\Concerns\HandlesApiErrors;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -31,7 +32,7 @@ class Operations extends Component
     public ?string $ciError = null;
 
     // Cash-out state
-    public string $coStep = 'lookup'; // lookup | amount | confirm | success
+    public string $coStep = 'lookup'; // lookup | amount | confirm | pin | confirmation | success
     public string $coPhoneCountryCode = '269';
     public string $coPhoneNumber = '';
     public ?array $coMerchant = null;
@@ -39,6 +40,11 @@ class Operations extends Component
     public ?array $coResult = null;
     public ?string $coError = null;
     public int $coStatus = 200;
+    public string $coOutcome = '';                // EXECUTED | PENDING_PIN | PENDING_CONFIRMATION | PENDING_APPROVAL
+    public ?string $coIdempotencyKey = null;      // Stable across PENDING_* resubmissions
+    public ?int $coMatchedThreshold = null;       // Returned with PENDING_PIN / PENDING_CONFIRMATION
+    public string $coMerchantPin = '';            // NEVER logged; cleared right after the API call
+    public ?string $coPinError = null;
 
     public function mount(string $tab = 'cash-in'): void
     {
@@ -232,15 +238,72 @@ class Operations extends Component
             return;
         }
 
+        if ($this->coIdempotencyKey === null) {
+            $this->coIdempotencyKey = (string) Str::uuid();
+        }
+
         $this->coError = null;
 
+        $this->sendCashOut($operations, [
+            'merchantId' => (string) $this->coMerchant['merchantId'],
+            'amount'     => (int) $this->coAmount,
+        ]);
+    }
+
+    public function submitMerchantPin(OperationsApi $operations): void
+    {
+        $this->validate([
+            'coMerchantPin' => 'required|regex:/^\d{4,8}$/',
+        ], [
+            'coMerchantPin.required' => 'Le PIN marchand est requis.',
+            'coMerchantPin.regex'    => 'Le PIN doit contenir 4 à 8 chiffres.',
+        ]);
+
+        if ($this->coIdempotencyKey === null || ! is_array($this->coMerchant)) {
+            $this->resetCashOut();
+            return;
+        }
+
+        // Capture-then-clear so the raw PIN is never persisted on the component
+        // (Livewire serializes public props between requests).
+        $pin = $this->coMerchantPin;
+        $this->coMerchantPin = '';
+        $this->coPinError = null;
+
+        $this->sendCashOut($operations, [
+            'merchantId'  => (string) $this->coMerchant['merchantId'],
+            'amount'      => (int) $this->coAmount,
+            'merchantPin' => $pin,
+        ]);
+
+        unset($pin);
+    }
+
+    public function acknowledgeConfirmation(OperationsApi $operations): void
+    {
+        if ($this->coIdempotencyKey === null || ! is_array($this->coMerchant)) {
+            $this->resetCashOut();
+            return;
+        }
+
+        $this->coError = null;
+
+        $this->sendCashOut($operations, [
+            'merchantId'               => (string) $this->coMerchant['merchantId'],
+            'amount'                   => (int) $this->coAmount,
+            'confirmationAcknowledged' => true,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function sendCashOut(OperationsApi $operations, array $payload): void
+    {
         try {
-            $result = $operations->processCashOut([
-                'merchantId' => (string) $this->coMerchant['merchantId'],
-                'amount'     => (int) $this->coAmount,
-            ]);
+            $result = $operations->processCashOut($payload, (string) $this->coIdempotencyKey);
         } catch (ApiException $exception) {
-            $this->showApiError($exception, 'coError');
+            $this->handleCashOutException($exception, array_key_exists('merchantPin', $payload));
 
             return;
         }
@@ -253,7 +316,44 @@ class Operations extends Component
             $this->coResult = $result;
         }
 
-        $this->coStep = 'success';
+        $this->routeCashOutOutcome();
+    }
+
+    private function handleCashOutException(ApiException $exception, bool $wasPinSubmit): void
+    {
+        $code = $exception->apiCode();
+
+        if ($wasPinSubmit && $code === 'AUTH_PIN_INVALID') {
+            $this->coPinError = 'PIN marchand invalide. Demandez au marchand de réessayer.';
+            $this->coStep = 'pin';
+            return;
+        }
+
+        if ($wasPinSubmit && $code === 'AUTH_PIN_LOCKED') {
+            $this->coPinError = 'PIN marchand verrouillé après 3 tentatives. Réessayez dans 15 minutes.';
+            $this->coStep = 'pin';
+            return;
+        }
+
+        $this->showApiError($exception, 'coError');
+    }
+
+    private function routeCashOutOutcome(): void
+    {
+        $outcome = is_array($this->coResult)
+            ? (string) ($this->coResult['outcome'] ?? ($this->coResult['status'] ?? ''))
+            : '';
+
+        $this->coOutcome = $outcome;
+        $this->coMatchedThreshold = is_array($this->coResult) && isset($this->coResult['matchedThresholdAmount'])
+            ? (int) $this->coResult['matchedThresholdAmount']
+            : null;
+
+        $this->coStep = match ($outcome) {
+            'PENDING_PIN'          => 'pin',
+            'PENDING_CONFIRMATION' => 'confirmation',
+            default                => 'success', // EXECUTED, PENDING_APPROVAL
+        };
     }
 
     public function resetCashOut(): void
@@ -265,6 +365,11 @@ class Operations extends Component
         $this->coResult = null;
         $this->coError = null;
         $this->coStatus = 200;
+        $this->coOutcome = '';
+        $this->coIdempotencyKey = null;
+        $this->coMatchedThreshold = null;
+        $this->coMerchantPin = '';
+        $this->coPinError = null;
         $this->resetValidation();
     }
 
