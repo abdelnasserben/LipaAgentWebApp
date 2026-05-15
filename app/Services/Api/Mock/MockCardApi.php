@@ -26,13 +26,19 @@ final class MockCardApi implements CardApi
         // Match assigned stock first — those cards are not yet linked to a customer.
         foreach (FixtureLoader::load('cards/stock') as $stock) {
             if (strtoupper((string) ($stock['nfcUid'] ?? '')) === $upper) {
+                $internalCardNumber = (string) ($stock['internalCardNumber'] ?? '');
+
                 return [
-                    'cardId'     => (string) $stock['id'],
-                    'nfcUid'     => $upper,
-                    'cardType'   => 'STANDARD',
-                    'status'     => 'ISSUED',
-                    'customerId' => null,
-                    'expiresAt'  => null,
+                    'cardId'                   => (string) $stock['id'],
+                    'nfcUid'                   => $upper,
+                    'internalCardLast4'        => $this->internalCardLast4($internalCardNumber),
+                    'maskedInternalCardNumber' => $this->maskedInternalCardNumber($internalCardNumber),
+                    'cardType'                 => 'STANDARD',
+                    'status'                   => 'ISSUED',
+                    'customerId'               => null,
+                    'customerFullName'         => null,
+                    'customerPhoneMasked'      => null,
+                    'expiresAt'                => null,
                 ];
             }
         }
@@ -44,14 +50,19 @@ final class MockCardApi implements CardApi
 
         $known = FixtureLoader::load('customers/known');
         $customer = $known[abs(crc32($upper)) % max(1, count($known))] ?? null;
+        $internalCardNumber = 'CARD-' . str_pad((string) (abs(crc32($upper)) % 100000), 5, '0', STR_PAD_LEFT);
 
         return [
-            'cardId'     => 'crd_' . substr(md5($upper), 0, 22),
-            'nfcUid'     => $upper,
-            'cardType'   => 'STANDARD',
-            'status'     => 'ACTIVE',
-            'customerId' => is_array($customer) ? (string) ($customer['customerId'] ?? '') : null,
-            'expiresAt'  => now()->addYears(2)->toDateString(),
+            'cardId'                   => 'crd_' . substr(md5($upper), 0, 22),
+            'nfcUid'                   => $upper,
+            'internalCardLast4'        => $this->internalCardLast4($internalCardNumber),
+            'maskedInternalCardNumber' => $this->maskedInternalCardNumber($internalCardNumber),
+            'cardType'                 => 'STANDARD',
+            'status'                   => 'ACTIVE',
+            'customerId'               => is_array($customer) ? (string) ($customer['customerId'] ?? '') : null,
+            'customerFullName'         => is_array($customer) ? (string) ($customer['fullName'] ?? '') : null,
+            'customerPhoneMasked'      => $this->maskedCustomerPhone(is_array($customer) ? $customer : null),
+            'expiresAt'                => now()->addYears(2)->toDateString(),
         ];
     }
 
@@ -104,23 +115,75 @@ final class MockCardApi implements CardApi
      */
     private function cardResponse(string $customerId, string $cardId, string $status): array
     {
+        $customer = $this->customerById($customerId);
+        $internalCardNumber = 'CARD-' . str_pad((string) (abs(crc32($cardId)) % 100000), 5, '0', STR_PAD_LEFT);
+
         return [
-            'id'                  => $cardId,
-            'nfcUid'              => null,
-            'internalCardNumber'  => 'CARD-MOCK',
-            'walletId'            => null,
-            'customerId'          => $customerId,
-            'cardType'            => 'STANDARD',
-            'status'              => $status,
-            'pinEnabled'          => false,
-            'issuedByAgentId'     => null,
-            'issuedAt'            => now()->subMonths(2)->toIso8601ZuluString(),
-            'activatedAt'         => now()->subMonths(2)->toIso8601ZuluString(),
-            'expiresAt'           => now()->addYears(2)->toDateString(),
-            'lastUsedAt'          => null,
-            'lastUsedTerminalId'  => null,
-            'replacedByCardId'    => null,
-            'replacementOfCardId' => null,
+            'cardId'                   => $cardId,
+            'nfcUid'                   => strtoupper(substr(md5($cardId), 0, 14)),
+            'internalCardLast4'        => $this->internalCardLast4($internalCardNumber),
+            'maskedInternalCardNumber' => $this->maskedInternalCardNumber($internalCardNumber),
+            'cardType'                 => 'STANDARD',
+            'status'                   => $status,
+            'customerId'               => $customerId,
+            'customerFullName'         => is_array($customer) ? (string) ($customer['fullName'] ?? '') : null,
+            'customerPhoneMasked'      => $this->maskedCustomerPhone($customer),
+            'expiresAt'                => now()->addYears(2)->toDateString(),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function customerById(string $customerId): ?array
+    {
+        foreach (FixtureLoader::load('customers/known') as $customer) {
+            if (($customer['customerId'] ?? null) === $customerId) {
+                return $customer;
+            }
+        }
+
+        return null;
+    }
+
+    private function internalCardLast4(?string $internalCardNumber): ?string
+    {
+        if ($internalCardNumber === null || $internalCardNumber === '') {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $internalCardNumber) ?? '';
+
+        if ($digits === '') {
+            return substr($internalCardNumber, -4);
+        }
+
+        return substr(str_pad($digits, 4, '0', STR_PAD_LEFT), -4);
+    }
+
+    private function maskedInternalCardNumber(?string $internalCardNumber): ?string
+    {
+        $last4 = $this->internalCardLast4($internalCardNumber);
+
+        return $last4 === null ? null : '**** ' . $last4;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $customer
+     */
+    private function maskedCustomerPhone(?array $customer): ?string
+    {
+        if ($customer === null) {
+            return null;
+        }
+
+        $countryCode = trim((string) ($customer['phoneCountryCode'] ?? ''));
+        $phoneNumber = preg_replace('/\D+/', '', (string) ($customer['phoneNumber'] ?? '')) ?? '';
+
+        if ($countryCode === '' || $phoneNumber === '') {
+            return null;
+        }
+
+        return '+' . $countryCode . ' **** ' . substr($phoneNumber, -4);
     }
 }

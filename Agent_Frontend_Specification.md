@@ -377,7 +377,7 @@ Dev behavior:
 |---|---|---|---|---|---|---|---|---|
 | GET | `/api/v1/agent/lookup?phoneCountryCode&phoneNumber` | Agent JWT | `Authorization` | `phoneCountryCode`, `phoneNumber` | query | `200 ApiResponse<CustomerLookupResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 CUSTOMER_NOT_FOUND` | Minimal customer projection for pre-transaction confirmation. |
 | GET | `/api/v1/agent/merchants/lookup?phoneCountryCode&phoneNumber` | Agent JWT | `Authorization` | `phoneCountryCode`, `phoneNumber` | query | `200 ApiResponse<MerchantLookupResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 MERCHANT_NOT_FOUND` | Minimal merchant projection for pre-cash-out confirmation. Resolves `merchantId` for subsequent `cash-out`. |
-| GET | `/api/v1/agent/cards/lookup?nfcUid` | Agent JWT | `Authorization` | `nfcUid` (14 hex chars) | query | `200 ApiResponse<CardLookupResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 CARD_NOT_FOUND` | Minimal card projection by scanned NFC UID. Returns `cardId` and `customerId` (when linked) for subsequent report-lost / report-stolen / replace flows. Never returns PIN or auth-key material. |
+| GET | `/api/v1/agent/cards/lookup?nfcUid` | Agent JWT | `Authorization` | `nfcUid` (14 hex chars) | query | `200 ApiResponse<CardLookupResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 CARD_NOT_FOUND` | Minimal card projection by scanned NFC UID. Returns `cardId`, masked printed-card number, and `customerId` (when linked) for subsequent report-lost / report-stolen / replace flows. Never returns PIN, NFC key material, or the full internal card number. |
 | POST | `/api/v1/agent/cash-in` | Agent JWT | `Authorization`, `Idempotency-Key`, optional `X-Correlation-Id` | none | `AgentCashInRequest` | `200 ApiResponse<AgentTransactionResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 CUSTOMER_NOT_FOUND`, `404 WALLET_NOT_FOUND`, `409 DUPLICATE_IDEMPOTENCY_KEY`, `422 WALLET_FROZEN`, `422 WALLET_SUSPENDED`, `422 WALLET_CLOSED`, `422 INSUFFICIENT_BALANCE`, `422 CONFIG_LIMIT_PROFILE_NOT_FOUND`, `422 CONFIG_RULE_INACTIVE`, `422 LIMIT_EXCEEDED` | Agent wallet is debited; customer wallet is credited. |
 | POST | `/api/v1/agent/cash-out` | Agent JWT | `Authorization`, `Idempotency-Key`, optional `X-Correlation-Id` | none | `AgentCashOutRequest` | `200 ApiResponse<AgentCashOutResponse>` or `202 ApiResponse<AgentCashOutResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 MERCHANT_NOT_FOUND`, `404 WALLET_NOT_FOUND`, `409 DUPLICATE_IDEMPOTENCY_KEY`, `422 ACTOR_SUSPENDED`, `422 CASH_OUT_NOT_ALLOWED`, `422 APPROVAL_REQUIRED`, `422 INSUFFICIENT_BALANCE`, `422 CONFIG_LIMIT_PROFILE_NOT_FOUND`, `422 CONFIG_RULE_INACTIVE`, `422 LIMIT_EXCEEDED` | `202` means a `LARGE_CASH_OUT` approval was created and no wallet movement happened yet. |
 
@@ -395,8 +395,8 @@ Dev behavior:
 |---|---|---|---|---|---|---|---|---|
 | GET | `/api/v1/agent/card-stock?status` | Agent JWT | `Authorization` | `status` | query | `200 PagedResponse<AgentCardStockView>` | `400 VALIDATION_INVALID_FORMAT`, `401 UNAUTHORIZED`, `403 FORBIDDEN` | Defaults to `ASSIGNED_TO_AGENT`; only the authenticated Agent stock is returned. |
 | POST | `/api/v1/agent/card-sell` | Agent JWT | `Authorization`, `Idempotency-Key`, optional `X-Correlation-Id` | none | `AgentCardSellRequest` | `200 ApiResponse<AgentCardSaleResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 CUSTOMER_NOT_FOUND`, `404 CARD_STOCK_NOT_FOUND`, `404 WALLET_NOT_FOUND`, `409 DUPLICATE_IDEMPOTENCY_KEY`, `422 ACTOR_PENDING_KYC`, `422 ACTOR_SUSPENDED`, `422 ACTOR_CLOSED`, `422 CARD_STOCK_WRONG_STATUS`, `422 CARD_STOCK_NOT_ASSIGNED_TO_AGENT`, `422 INSUFFICIENT_BALANCE`, `422 CONFIG_LIMIT_PROFILE_NOT_FOUND`, `422 CONFIG_RULE_INACTIVE`, `422 LIMIT_EXCEEDED` | Sells an assigned NFC card by scanned `nfcUid`. |
-| POST | `/api/v1/agent/customers/{customerId}/cards/{cardId}/report-lost` | Agent JWT | `Authorization` | none | none | `200 ApiResponse<CardResponse>` | `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 CARD_NOT_FOUND`, `422 ACTOR_SUSPENDED` | Idempotent when the card is already `LOST`. |
-| POST | `/api/v1/agent/customers/{customerId}/cards/{cardId}/report-stolen` | Agent JWT | `Authorization` | none | none | `200 ApiResponse<CardResponse>` | `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 CARD_NOT_FOUND`, `422 ACTOR_SUSPENDED` | Idempotent when the card is already `STOLEN`. |
+| POST | `/api/v1/agent/customers/{customerId}/cards/{cardId}/report-lost` | Agent JWT | `Authorization` | none | none | `200 ApiResponse<CardLookupResponse>` | `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 CARD_NOT_FOUND`, `422 ACTOR_SUSPENDED` | Idempotent when the card is already `LOST`; returns concise confirmation with final status and masked card number. |
+| POST | `/api/v1/agent/customers/{customerId}/cards/{cardId}/report-stolen` | Agent JWT | `Authorization` | none | none | `200 ApiResponse<CardLookupResponse>` | `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 CARD_NOT_FOUND`, `422 ACTOR_SUSPENDED` | Idempotent when the card is already `STOLEN`; returns concise confirmation with final status and masked card number. |
 | POST | `/api/v1/agent/customers/{customerId}/cards/{cardId}/replace` | Agent JWT | `Authorization`, `Idempotency-Key`, optional `X-Correlation-Id` | none | `AgentCardReplaceRequest` | `200 ApiResponse<AgentCardReplacementResponse>` | `400 VALIDATION_FIELD_REQUIRED`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 AGENT_NOT_FOUND`, `404 CARD_NOT_FOUND`, `404 CARD_STOCK_NOT_FOUND`, `404 WALLET_NOT_FOUND`, `409 DUPLICATE_IDEMPOTENCY_KEY`, `422 ACTOR_PENDING_KYC`, `422 ACTOR_SUSPENDED`, `422 ACTOR_CLOSED`, `422 CARD_NOT_ACTIVE`, `422 CARD_STOCK_WRONG_STATUS`, `422 CARD_STOCK_NOT_ASSIGNED_TO_AGENT`, `422 INSUFFICIENT_BALANCE`, `422 CONFIG_LIMIT_PROFILE_NOT_FOUND`, `422 CONFIG_RULE_INACTIVE`, `422 LIMIT_EXCEEDED` | Replaces a customer card using Agent-assigned stock and charges `replacementFee`. |
 
 ### 5.7 Commissions
@@ -760,10 +760,14 @@ MerchantLookupResponse = {
 
 CardLookupResponse = {
   cardId: uuid;
-  nfcUid: string;                 // 14 uppercase hex chars
+  nfcUid: string;                 // 14 uppercase hex chars; kept for the technical scan flow
+  internalCardLast4: string | null;
+  maskedInternalCardNumber: string | null; // e.g. "•••• 0099"
   cardType: CardType;
   status: CardStatus;
   customerId: uuid | null;        // null when the card is not yet linked
+  customerFullName: string | null;
+  customerPhoneMasked: string | null; // e.g. "+269 •••• 2345"
   expiresAt: date | null;         // ISO-8601 calendar date
 }
 ```
@@ -802,25 +806,6 @@ AgentCardReplacementResponse = {
   commissionAmount?: long;
   completedAt?: instant;
   replayed: boolean;
-}
-
-CardResponse = {
-  id: uuid;
-  nfcUid?: string;
-  internalCardNumber: string;
-  walletId?: uuid;
-  customerId?: uuid;
-  cardType?: string;
-  status: string;
-  pinEnabled: boolean;
-  issuedByAgentId?: uuid;
-  issuedAt: instant;
-  activatedAt?: instant;
-  expiresAt: date;
-  lastUsedAt?: instant;
-  lastUsedTerminalId?: uuid;
-  replacedByCardId?: uuid;
-  replacementOfCardId?: uuid;
 }
 
 AgentCommissionResponse = {
@@ -1058,7 +1043,7 @@ For KYC document upload, send `multipart/form-data` with exactly these frontend-
 | KYC documents | `kyc.api.AgentKycController`, `KycDocumentResponse`, `StoreKycDocumentUseCase` |
 | Card stock | `card.api.AgentCardStockController`, `card.domain.CardStock`, `CardStockStatus` |
 | Card sale | `transaction.api.AgentTransactionController`, `CardSaleUseCase`, `AgentCardSellRequest`, `AgentCardSaleResponse` |
-| Card report lost/stolen | `card.api.AgentCardController`, `card.application.AgentCardService`, `backoffice.api.dto.CardResponse` |
+| Card report lost/stolen | `card.api.AgentCardController`, `card.application.AgentCardService`, `transaction.api.CardLookupResponse` |
 | Card replacement | `transaction.api.AgentCardReplacementController`, `CardReplacementUseCase`, `AgentCardReplaceRequest`, `AgentCardReplacementResponse` |
 | Enums | `identity.domain.AgentStatus`, `CustomerStatus`, `shared.domain.TransactionType`, `transaction.domain.TransactionStatus`, `card.domain.CardStatus`, `card.domain.CardStockStatus`, `kyc.domain.KycDocumentType`, `kyc.domain.KycDocumentStatus`, `fee.domain.PayoutStatus`, `fee.domain.SettlementMode` |
 

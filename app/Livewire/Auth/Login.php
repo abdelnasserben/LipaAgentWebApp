@@ -132,7 +132,7 @@ class Login extends Component
 
         // PIN set successfully — return Agent to the login screen to sign in with the new PIN.
         $this->restartFromCredentials();
-        session()->flash('api_error', 'PIN Agent defini avec succes. Connectez-vous avec votre nouveau PIN.');
+        session()->flash('api_error', 'PIN defini avec succes. Connectez-vous avec votre nouveau PIN.');
         $this->redirect(route('login'), navigate: true);
     }
 
@@ -270,8 +270,8 @@ class Login extends Component
             'phoneCountryCode.regex' => 'Indicatif pays invalide.',
             'phoneNumber.required' => 'Numero de telephone requis.',
             'phoneNumber.regex' => 'Numero de telephone invalide.',
-            'pin.required' => 'PIN Agent requis.',
-            'pin.regex' => 'Le PIN Agent doit contenir 4 a 8 chiffres.',
+            'pin.required' => 'PIN requis.',
+            'pin.regex' => 'Le PIN doit contenir 4 a 8 chiffres.',
             'totpCode.required' => 'Code TOTP requis.',
             'totpCode.regex' => 'Le code TOTP doit contenir 6 chiffres.',
             'newPin.required' => 'Nouveau PIN requis.',

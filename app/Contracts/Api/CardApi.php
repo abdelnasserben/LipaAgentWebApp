@@ -32,7 +32,7 @@ interface CardApi
      * POST /api/v1/agent/customers/{customerId}/cards/{cardId}/report-lost
      * Idempotent when the card is already LOST.
      *
-     * @return array<string, mixed> CardResponse
+     * @return array<string, mixed> CardLookupResponse
      */
     public function reportLost(string $customerId, string $cardId): array;
 
@@ -40,7 +40,7 @@ interface CardApi
      * POST /api/v1/agent/customers/{customerId}/cards/{cardId}/report-stolen
      * Idempotent when the card is already STOLEN.
      *
-     * @return array<string, mixed> CardResponse
+     * @return array<string, mixed> CardLookupResponse
      */
     public function reportStolen(string $customerId, string $cardId): array;
 

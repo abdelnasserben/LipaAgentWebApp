@@ -55,7 +55,7 @@
 
             <div class="mb-6">
                 <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
-                    PIN Agent
+                    PIN
                 </label>
 
                 <input type="password" wire:model="pin" inputmode="numeric" pattern="\d*" maxlength="8"
@@ -145,7 +145,7 @@
                         Definir votre PIN
                     </div>
                     <div class="mt-0.5 text-xs text-app-muted">
-                        Choisissez un PIN Agent de 4 a 8 chiffres
+                        Choisissez un PIN de 4 a 8 chiffres
                     </div>
                 </div>
             </div>

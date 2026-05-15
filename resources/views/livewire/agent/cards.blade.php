@@ -258,7 +258,7 @@
                             <div class="mb-4">
                                 <div class="mb-1 text-[15px] font-bold text-app-text">Rechercher la carte</div>
                                 <div class="text-xs text-app-muted">
-                                    Scannez ou saisissez le NFC UID de la carte (14 caractères hexadécimaux).
+                                    Saisissez le NFC UID de la carte.
                                 </div>
                             </div>
 
@@ -299,6 +299,14 @@
                                     </button>
                                 </div>
                             @else
+                                @php
+                                    $lookupCardStatus = $lookedUpCard['cardStatus'] ?? ($lookedUpCard['status'] ?? 'ACTIVE');
+                                    $lookupCardNumber =
+                                        $lookedUpCard['maskedInternalCardNumber'] ??
+                                        (!empty($lookedUpCard['internalCardLast4'])
+                                            ? '**** ' . $lookedUpCard['internalCardLast4']
+                                            : '—');
+                                @endphp
                                 <div
                                     class="flex items-start gap-3 rounded-xl border-[1.5px] border-app-accent bg-app-accent-bg p-4">
                                     <div
@@ -307,18 +315,47 @@
                                     </div>
 
                                     <div class="min-w-0 flex-1">
-                                        <div class="font-mono text-[13px] font-bold text-app-text">
-                                            NFC {{ $lookedUpCard['nfcUid'] ?? '—' }}
+                                        <div class="truncate text-[14px] font-extrabold text-app-text">
+                                            {{ $lookedUpCard['customerFullName'] ?? 'Client rattaché' }}
                                         </div>
-                                        <div class="mt-0.5 font-mono text-[11px] text-app-muted">
-                                            Type {{ $lookedUpCard['cardType'] ?? '—' }}
-                                            @if (!empty($lookedUpCard['expiresAt']))
-                                                • Expire le {{ $lookedUpCard['expiresAt'] }}
-                                            @endif
+                                        @if (!empty($lookedUpCard['customerPhoneMasked']))
+                                            <div class="mt-0.5 font-mono text-[12px] text-app-muted">
+                                                {{ $lookedUpCard['customerPhoneMasked'] }}
+                                            </div>
+                                        @endif
+
+                                        <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                            <div>
+                                                <div
+                                                    class="text-[10px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                                    Carte
+                                                </div>
+                                                <div class="mt-0.5 font-mono text-[13px] font-bold text-app-text">
+                                                    {{ $lookupCardNumber }}
+                                                </div>
+                                                @if (!empty($lookedUpCard['expiresAt']))
+                                                    <div class="mt-0.5 text-[11px] text-app-muted">
+                                                        Expire le {{ $lookedUpCard['expiresAt'] }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <div
+                                                    class="text-[10px] font-bold uppercase tracking-[0.08em] text-app-muted">
+                                                    Type et statut
+                                                </div>
+                                                <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                                    <x-agent-badge :status="$lookedUpCard['cardType'] ?? 'STANDARD'" />
+                                                    <x-agent-badge :status="$lookupCardStatus" />
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="mt-1.5 flex flex-wrap gap-1.5">
-                                            <x-agent-badge :status="$lookedUpCard['status'] ?? 'ACTIVE'" />
-                                        </div>
+
+                                        @if (empty($lookedUpCard['customerFullName']) || empty($lookedUpCard['customerPhoneMasked']))
+                                            <div class="mt-2 text-[11px] font-semibold text-app-muted">
+                                                Vérifiez l'identité du client avant de continuer.
+                                            </div>
+                                        @endif
                                     </div>
 
                                     <button wire:click="clearCardLookup" type="button"
@@ -469,6 +506,19 @@
 
                         {{-- Result --}}
                         @if ($lastResult !== null)
+                            @php
+                                $confirmedCard = $activeTab === 'replace' ? ($lastConfirmedCard ?? []) : $lastResult;
+                                $confirmedCardStatus =
+                                    $confirmedCard['cardStatus'] ??
+                                    ($confirmedCard['status'] ?? ($reportStatus === 'stolen' ? 'STOLEN' : 'LOST'));
+                                $confirmedCardNumber =
+                                    $confirmedCard['maskedInternalCardNumber'] ??
+                                    (!empty($confirmedCard['internalCardLast4'])
+                                        ? '**** ' . $confirmedCard['internalCardLast4']
+                                        : ($confirmedCard['internalCardNumber'] ?? '—'));
+                                $confirmedCustomerName = $confirmedCard['customerFullName'] ?? '—';
+                                $confirmedCustomerPhone = $confirmedCard['customerPhoneMasked'] ?? '—';
+                            @endphp
                             <x-alert variant="success" class="p-4 md:p-5"
                                 text-class="text-[13px] font-normal leading-relaxed">
                                 <div class="mb-3 font-bold text-app-green">
@@ -477,8 +527,18 @@
 
                                 <div class="rounded-xl border border-app-border bg-app-surface px-4 py-1">
                                     @if ($activeTab === 'replace')
-                                        <x-detail-row label="Ancienne carte"
-                                            :mono="true">{{ $lastResult['oldCardId'] ?? '—' }}</x-detail-row>
+                                        <x-detail-row label="Client">
+                                            {{ $confirmedCustomerName }}
+                                        </x-detail-row>
+                                        <x-detail-row label="Téléphone" :mono="true">
+                                            {{ $confirmedCustomerPhone }}
+                                        </x-detail-row>
+                                        <x-detail-row label="Carte remplacée" :mono="true">
+                                            {{ $confirmedCardNumber }}
+                                        </x-detail-row>
+                                        <x-detail-row label="Type ancienne carte">
+                                            <x-agent-badge :status="$confirmedCard['cardType'] ?? 'STANDARD'" />
+                                        </x-detail-row>
                                         <x-detail-row label="Nouvelle carte"
                                             :mono="true">{{ $lastResult['newCardId'] ?? '—' }}</x-detail-row>
                                         @if (!empty($lastResult['transactionId']))
@@ -491,17 +551,24 @@
                                                 KMF
                                             </x-detail-row>
                                         @endif
-                                        <x-detail-row label="Statut" :border="false">
+                                        <x-detail-row label="Statut opération" :border="false">
                                             <x-agent-badge :status="$lastResult['status'] ?? 'COMPLETED'" />
                                         </x-detail-row>
                                     @else
-                                        <x-detail-row label="ID Carte" :mono="true">
-                                            {{ $lastResult['id'] ?? ($lookedUpCard['cardId'] ?? '—') }}
+                                        <x-detail-row label="Client">
+                                            {{ $confirmedCustomerName }}
                                         </x-detail-row>
-                                        <x-detail-row label="N° interne"
-                                            :mono="true">{{ $lastResult['internalCardNumber'] ?? '—' }}</x-detail-row>
+                                        <x-detail-row label="Téléphone" :mono="true">
+                                            {{ $confirmedCustomerPhone }}
+                                        </x-detail-row>
+                                        <x-detail-row label="Carte" :mono="true">
+                                            {{ $confirmedCardNumber }}
+                                        </x-detail-row>
+                                        <x-detail-row label="Type">
+                                            <x-agent-badge :status="$confirmedCard['cardType'] ?? 'STANDARD'" />
+                                        </x-detail-row>
                                         <x-detail-row label="Statut carte" :border="false">
-                                            <x-agent-badge :status="$lastResult['status'] ?? ($reportStatus === 'stolen' ? 'STOLEN' : 'LOST')" />
+                                            <x-agent-badge :status="$confirmedCardStatus" />
                                         </x-detail-row>
                                     @endif
                                 </div>

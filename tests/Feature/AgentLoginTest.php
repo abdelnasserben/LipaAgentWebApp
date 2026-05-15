@@ -19,7 +19,7 @@ class AgentLoginTest extends TestCase
     {
         $this->get('/login')
             ->assertOk()
-            ->assertSee('PIN Agent')
+            ->assertSee('PIN')
             ->assertSee('Se connecter')
             ->assertDontSee('Recevoir le code')
             ->assertDontSee('Verifiez vos SMS');

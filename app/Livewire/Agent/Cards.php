@@ -52,6 +52,9 @@ class Cards extends Component
     /** @var array<string, mixed>|null */
     public ?array $lastResult = null;
 
+    /** @var array<string, mixed>|null */
+    public ?array $lastConfirmedCard = null;
+
     public bool $canSellCards = false;
 
     public function mount(AgentApi $agent, CardApi $cards): void
@@ -76,6 +79,7 @@ class Cards extends Component
 
         $this->activeTab  = $tab;
         $this->lastResult = null;
+        $this->lastConfirmedCard = null;
         $this->lookedUpCard = null;
         $this->cardNfcUid = '';
         $this->cardLookupError = null;
@@ -91,6 +95,7 @@ class Cards extends Component
 
         $this->reportStatus = $status;
         $this->lastResult = null;
+        $this->lastConfirmedCard = null;
         $this->clearApiError();
         $this->resetValidation();
     }
@@ -214,6 +219,7 @@ class Cards extends Component
         $this->cardLookupError = null;
         $this->lookedUpCard = null;
         $this->lastResult = null;
+        $this->lastConfirmedCard = null;
         $this->clearApiError();
 
         try {
@@ -248,6 +254,7 @@ class Cards extends Component
         $this->cardNfcUid = '';
         $this->cardLookupError = null;
         $this->lastResult = null;
+        $this->lastConfirmedCard = null;
         $this->resetValidation();
     }
 
@@ -259,9 +266,10 @@ class Cards extends Component
         }
 
         $this->clearApiError();
+        $confirmedCard = $this->lookedUpCard;
 
         try {
-            $this->lastResult = $this->reportStatus === 'stolen'
+            $result = $this->reportStatus === 'stolen'
                 ? $cards->reportStolen((string) $this->lookedUpCard['customerId'], (string) $this->lookedUpCard['cardId'])
                 : $cards->reportLost((string) $this->lookedUpCard['customerId'], (string) $this->lookedUpCard['cardId']);
         } catch (ApiException $exception) {
@@ -269,6 +277,8 @@ class Cards extends Component
             return;
         }
 
+        $this->lastResult = array_replace($confirmedCard, $result);
+        $this->lastConfirmedCard = $this->lastResult;
         $this->cardNfcUid = '';
         $this->lookedUpCard = null;
         $this->cardLookupError = null;
@@ -297,6 +307,7 @@ class Cards extends Component
         );
 
         $this->clearApiError();
+        $confirmedCard = $this->lookedUpCard;
 
         try {
             $this->lastResult = $cards->replaceCard(
@@ -311,6 +322,8 @@ class Cards extends Component
             $this->showApiError($exception);
             return;
         }
+
+        $this->lastConfirmedCard = $confirmedCard;
 
         // Refresh stock so the consumed card disappears from the list.
         try {
@@ -330,6 +343,7 @@ class Cards extends Component
     public function resetForm(): void
     {
         $this->lastResult     = null;
+        $this->lastConfirmedCard = null;
         $this->cardNfcUid     = '';
         $this->lookedUpCard   = null;
         $this->cardLookupError = null;

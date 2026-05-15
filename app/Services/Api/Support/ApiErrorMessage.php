@@ -24,11 +24,11 @@ final class ApiErrorMessage
     {
         $messages = [
             'INVALID_CREDENTIALS' => 'Identifiants invalides. Verifiez le telephone et le PIN.',
-            'AUTH_PIN_NOT_SET' => "Aucun PIN Agent n'est configure pour ce compte.",
-            'AUTH_PIN_LOCKED' => 'PIN Agent verrouille apres trop de tentatives. Reessayez dans 15 minutes.',
-            'AUTH_PIN_ALREADY_SET' => 'Un PIN Agent est deja configure pour ce compte.',
-            'AUTH_PIN_FORMAT' => 'Le format du PIN Agent est invalide.',
-            'AUTH_PIN_INVALID' => 'PIN Agent invalide.',
+            'AUTH_PIN_NOT_SET' => "Aucun PIN n'est configure pour ce compte.",
+            'AUTH_PIN_LOCKED' => 'PIN verrouille apres trop de tentatives. Reessayez dans 15 minutes.',
+            'AUTH_PIN_ALREADY_SET' => 'Un PIN est deja configure pour ce compte.',
+            'AUTH_PIN_FORMAT' => 'Le format du PIN est invalide.',
+            'AUTH_PIN_INVALID' => 'PIN invalide.',
             'AUTH_INVALID_TOKEN' => 'Lien de definition de PIN expire ou invalide. Reconnectez-vous pour recommencer.',
             'MFA_REQUIRED' => 'Code TOTP requis pour terminer la connexion.',
             'MFA_INVALID' => 'Code TOTP invalide ou expire.',
