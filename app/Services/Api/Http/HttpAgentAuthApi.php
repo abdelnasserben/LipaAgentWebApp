@@ -56,6 +56,25 @@ final class HttpAgentAuthApi implements AgentAuthApi
         }
     }
 
+    public function resetAuthPin(string $phoneCountryCode, string $phoneNumber, string $totpCode, string $newPin): void
+    {
+        $response = $this->client->post(
+            '/api/v1/auth/agent/auth-pin/reset',
+            [
+                'phoneCountryCode' => $phoneCountryCode,
+                'phoneNumber' => $phoneNumber,
+                'totpCode' => $totpCode,
+                'newPin' => $newPin,
+            ],
+            [],
+            false,
+        );
+
+        if ($response->failed()) {
+            throw $this->exceptionFromResponse($response, 'AUTH_MFA_INVALID');
+        }
+    }
+
     public function logout(): void
     {
         try {

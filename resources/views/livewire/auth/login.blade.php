@@ -69,6 +69,13 @@
                     Connexion...
                 </span>
             </button>
+
+            <div class="mt-4 text-center">
+                <button type="button" wire:click="startPinReset"
+                    class="cursor-pointer border-0 bg-transparent p-0 text-[12px] font-semibold text-app-accent hover:underline">
+                    PIN oublie ?
+                </button>
+            </div>
         </form>
     @elseif($step === 'mfa')
         <div>
@@ -122,7 +129,7 @@
                 </button>
             </form>
         </div>
-    @else
+    @elseif($step === 'pin-setup')
         <div>
             <div class="mb-7 flex items-center gap-2.5">
                 <button wire:click="back" type="button"
@@ -165,7 +172,7 @@
                     </label>
 
                     <input type="password" wire:model="confirmPin" inputmode="numeric" pattern="\d*"
-                        maxlength="8" autocomplete="new-password" placeholder="Saisissez a nouveau le PIN"
+                        maxlength="8" autocomplete="new-password" placeholder="****"
                         class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base text-app-text outline-none focus:border-app-accent" />
 
                     @error('confirmPin')
@@ -183,6 +190,110 @@
                     <span wire:loading.flex wire:target="setupPin" class="hidden items-center gap-2">
                         <x-spinner :size="16" />
                         Enregistrement...
+                    </span>
+                </button>
+            </form>
+        </div>
+    @else
+        <div>
+            <div class="mb-7 flex items-center gap-2.5">
+                <button wire:click="back" type="button"
+                    class="flex cursor-pointer rounded-md border-0 bg-transparent p-1 text-app-muted"
+                    aria-label="Retour">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M12.5 5L7.5 10l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+
+                <div>
+                    <div class="text-[15px] font-bold text-app-text">
+                        Reinitialiser le PIN
+                    </div>
+                    <div class="mt-0.5 text-xs text-app-muted">
+                        Reservee aux Agents avec TOTP enrole
+                    </div>
+                </div>
+            </div>
+
+            <form wire:submit="resetPin">
+                <div class="mb-5">
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
+                        Numero de telephone
+                    </label>
+
+                    <div class="flex items-stretch gap-2">
+                        <div
+                            class="flex shrink-0 items-center justify-center rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 font-mono text-sm font-bold text-app-text">
+                            +{{ $phoneCountryCode }}
+                        </div>
+
+                        <input type="tel" wire:model="phoneNumber" placeholder="3XX XXXX" inputmode="numeric"
+                            pattern="\d*" autocomplete="tel-national"
+                            class="box-border min-w-0 flex-1 rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base text-app-text outline-none focus:border-app-accent" />
+                    </div>
+
+                    @error('phoneCountryCode')
+                        <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                    @enderror
+
+                    @error('phoneNumber')
+                        <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="mb-5">
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
+                        Nouveau PIN
+                    </label>
+
+                    <input type="password" wire:model="newPin" inputmode="numeric" pattern="\d*" maxlength="8"
+                        autocomplete="new-password" placeholder="****"
+                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base text-app-text outline-none focus:border-app-accent" />
+
+                    @error('newPin')
+                        <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="mb-5">
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
+                        Confirmer le PIN
+                    </label>
+
+                    <input type="password" wire:model="confirmPin" inputmode="numeric" pattern="\d*"
+                        maxlength="8" autocomplete="new-password" placeholder="****"
+                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base text-app-text outline-none focus:border-app-accent" />
+
+                    @error('confirmPin')
+                        <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="mb-6">
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.03em] text-app-muted">
+                        Code TOTP a 6 chiffres
+                    </label>
+
+                    <input type="text" wire:model="totpCode" inputmode="numeric" pattern="\d*" maxlength="6"
+                        autocomplete="one-time-code" placeholder="000000"
+                        class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 text-center font-mono text-lg font-bold tracking-[0.3em] text-app-text outline-none focus:border-app-accent" />
+
+                    @error('totpCode')
+                        <p class="mt-1.5 text-[11px] text-app-red">{{ $message }}</p>
+                    @enderror
+
+                    <x-alert type="info" class="mt-3">
+                        Sans TOTP activé, contactez le support Lipa.
+                    </x-alert>
+                </div>
+
+                <button type="submit" wire:loading.attr="disabled" wire:target="resetPin"
+                    class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70">
+                    <span wire:loading.remove wire:target="resetPin">Reinitialiser le PIN</span>
+                    <span wire:loading.flex wire:target="resetPin" class="hidden items-center gap-2">
+                        <x-spinner :size="16" />
+                        Reinitialisation...
                     </span>
                 </button>
             </form>

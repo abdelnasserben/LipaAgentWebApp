@@ -70,6 +70,28 @@ final class MockAgentAuthApi implements AgentAuthApi
         }
     }
 
+    public function resetAuthPin(string $phoneCountryCode, string $phoneNumber, string $totpCode, string $newPin): void
+    {
+        $profile = FixtureLoader::load('agent/profile');
+
+        $phoneMatches = $phoneCountryCode === ($profile['phoneCountryCode'] ?? null)
+            && $phoneNumber === ($profile['phoneNumber'] ?? null);
+
+        // Mock convention: TOTP enrollment is signalled by phone "0000000" — return TOTP_REQUIRED for it.
+        if ($phoneMatches && $phoneNumber === '0000000') {
+            throw new AgentAuthException('AUTH_PIN_RESET_TOTP_REQUIRED', 422);
+        }
+
+        if (preg_match('/^\d{4,8}$/', $newPin) !== 1) {
+            throw new AgentAuthException('AUTH_PIN_FORMAT', 422);
+        }
+
+        // Anti-enumeration: unknown phone OR wrong TOTP both return AUTH_MFA_INVALID.
+        if (! $phoneMatches || $totpCode !== self::VALID_TOTP) {
+            throw new AgentAuthException('AUTH_MFA_INVALID', 401);
+        }
+    }
+
     public function logout(): void
     {
         // No-op in mock mode.

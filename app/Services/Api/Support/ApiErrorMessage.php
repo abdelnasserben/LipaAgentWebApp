@@ -32,6 +32,8 @@ final class ApiErrorMessage
             'AUTH_INVALID_TOKEN' => 'Lien de definition de PIN expire ou invalide. Reconnectez-vous pour recommencer.',
             'MFA_REQUIRED' => 'Code TOTP requis pour terminer la connexion.',
             'MFA_INVALID' => 'Code TOTP invalide ou expire.',
+            'AUTH_MFA_INVALID' => 'Telephone inconnu ou code TOTP invalide.',
+            'AUTH_PIN_RESET_TOTP_REQUIRED' => "La reinitialisation libre-service du PIN exige une application TOTP enrolee. Contactez le support Lipa pour une reinitialisation manuelle.",
             'LEGACY_OTP_LOGIN_REMOVED' => "L'ancien login SMS OTP n'est plus disponible. Utilisez telephone et PIN.",
             'REFRESH_TOKEN_INVALID' => 'Votre session a expire. Reconnectez-vous.',
 

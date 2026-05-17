@@ -18,7 +18,7 @@ class Login extends Component
 {
     use HandlesApiErrors;
 
-    public string $step = 'credentials'; // credentials | mfa | pin-setup
+    public string $step = 'credentials'; // credentials | mfa | pin-setup | pin-reset
 
     public string $phoneCountryCode = '269';
 
@@ -159,6 +159,57 @@ class Login extends Component
     public function back(): void
     {
         $this->restartFromCredentials();
+    }
+
+    public function startPinReset(): void
+    {
+        $this->normalizeCredentials();
+
+        $this->error = null;
+        $this->totpCode = '';
+        $this->newPin = '';
+        $this->confirmPin = '';
+        $this->step = 'pin-reset';
+    }
+
+    public function resetPin(AgentAuthApi $auth): void
+    {
+        $this->normalizeCredentials();
+        $this->newPin = trim($this->newPin);
+        $this->confirmPin = trim($this->confirmPin);
+        $this->totpCode = trim($this->totpCode);
+
+        $this->validate([
+            'phoneCountryCode' => 'required|regex:/^\d{1,5}$/',
+            'phoneNumber' => 'required|regex:/^\d{4,15}$/',
+            'totpCode' => 'required|regex:/^\d{6}$/',
+            'newPin' => 'required|regex:/^\d{4,8}$/',
+            'confirmPin' => 'required|regex:/^\d{4,8}$/',
+        ], $this->validationMessages());
+
+        if ($this->newPin !== $this->confirmPin) {
+            $this->addError('confirmPin', 'Le PIN et sa confirmation ne correspondent pas.');
+
+            return;
+        }
+
+        $this->error = null;
+
+        try {
+            $auth->resetAuthPin($this->phoneCountryCode, $this->phoneNumber, $this->totpCode, $this->newPin);
+        } catch (ApiException $exception) {
+            $this->showApiError($exception, 'error');
+            $this->totpCode = '';
+            $this->newPin = '';
+            $this->confirmPin = '';
+
+            return;
+        }
+
+        $this->pin = '';
+        $this->restartFromCredentials();
+        session()->flash('api_error', 'PIN reinitialise avec succes. Connectez-vous avec votre nouveau PIN.');
+        $this->redirect(route('login'), navigate: true);
     }
 
     private function restartFromCredentials(): void
