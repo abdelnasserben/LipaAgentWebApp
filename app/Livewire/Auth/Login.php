@@ -271,13 +271,13 @@ class Login extends Component
             'phoneNumber.required' => 'Numero de telephone requis.',
             'phoneNumber.regex' => 'Numero de telephone invalide.',
             'pin.required' => 'PIN requis.',
-            'pin.regex' => 'Le PIN doit contenir 4 a 8 chiffres.',
+            'pin.regex' => 'Le PIN doit contenir 4 à 8 chiffres.',
             'totpCode.required' => 'Code TOTP requis.',
             'totpCode.regex' => 'Le code TOTP doit contenir 6 chiffres.',
             'newPin.required' => 'Nouveau PIN requis.',
-            'newPin.regex' => 'Le PIN doit contenir 4 a 8 chiffres.',
+            'newPin.regex' => 'Le PIN doit contenir 4 à 8 chiffres.',
             'confirmPin.required' => 'Confirmation du PIN requise.',
-            'confirmPin.regex' => 'La confirmation doit contenir 4 a 8 chiffres.',
+            'confirmPin.regex' => 'La confirmation doit contenir 4 à 8 chiffres.',
         ];
     }
 

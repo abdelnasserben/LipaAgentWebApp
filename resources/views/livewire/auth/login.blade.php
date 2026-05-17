@@ -2,13 +2,7 @@
     {{-- Logo --}}
     <div class="mb-9 text-center">
         <div class="mb-3.5 inline-flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-app-sidebar">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M3 7h18v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" fill="white" fill-opacity=".15" stroke="white"
-                    stroke-width="1.5" />
-                <path d="M8 7V5a4 4 0 018 0v2" stroke="white" stroke-width="1.5" stroke-linecap="round" />
-                <path d="M9 13l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round"
-                    stroke-linejoin="round" />
-            </svg>
+            <img src="{{ asset('brand/lipa-icon-white.svg') }}" alt="Lipa" width="32" height="32" />
         </div>
 
         <h1 class="mb-1 mt-0 text-[22px] font-extrabold text-app-text">
@@ -59,7 +53,7 @@
                 </label>
 
                 <input type="password" wire:model="pin" inputmode="numeric" pattern="\d*" maxlength="8"
-                    autocomplete="current-password" placeholder="4 a 8 chiffres"
+                    autocomplete="current-password" placeholder="****"
                     class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base text-app-text outline-none focus:border-app-accent" />
 
                 @error('pin')
@@ -145,7 +139,7 @@
                         Definir votre PIN
                     </div>
                     <div class="mt-0.5 text-xs text-app-muted">
-                        Choisissez un PIN de 4 a 8 chiffres
+                        Choisissez un PIN de 4 à 8 chiffres
                     </div>
                 </div>
             </div>
@@ -157,7 +151,7 @@
                     </label>
 
                     <input type="password" wire:model="newPin" inputmode="numeric" pattern="\d*" maxlength="8"
-                        autocomplete="new-password" placeholder="4 a 8 chiffres"
+                        autocomplete="new-password" placeholder="****"
                         class="box-border w-full rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base text-app-text outline-none focus:border-app-accent" />
 
                     @error('newPin')

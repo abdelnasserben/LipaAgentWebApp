@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>{{ $title ?? 'Lipa' }} — Agent Portal</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('brand/favicon-color.svg') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('brand/favicon-32x32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('brand/favicon-16x16.png') }}" />
+    <link rel="apple-touch-icon" sizes="192x192" href="{{ asset('brand/favicon-192x192.png') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -18,13 +22,7 @@
     <aside class="app-sidebar" id="app-sidebar">
         {{-- Logo --}}
         <div style="display:flex;align-items:center;gap:10px;padding:0 14px 20px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:8px;flex-shrink:0;overflow:hidden;">
-            <div style="width:32px;height:32px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" fill="white" fill-opacity=".2" stroke="white" stroke-width="1.2"/>
-                    <path d="M5 4V3a3 3 0 016 0v1" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
-                    <path d="M5.5 8.5l1.5 1.5 3.5-3" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
+            <img src="{{ asset('brand/lipa-icon-white.svg') }}" alt="Lipa" width="32" height="32" style="flex-shrink:0;display:block;" />
             <div class="sidebar-label-block" style="overflow:hidden;white-space:nowrap;">
                 <div style="color:#fff;font-weight:800;font-size:15px;letter-spacing:-0.03em;line-height:1;">Lipa</div>
                 <div style="color:rgba(255,255,255,0.32);font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;">Agent Portal</div>
@@ -55,13 +53,10 @@
                    title="{{ $item['label'] }}"
                    class="sidebar-nav-item {{ $isActive ? 'active' : '' }}"
                    style="display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:9px;text-decoration:none;font-weight:{{ $isActive ? '700' : '500' }};color:{{ $isActive ? '#fff' : 'rgba(255,255,255,0.45)' }};transition:all 0.15s;white-space:nowrap;overflow:hidden;background:{{ $isActive ? 'rgba(255,255,255,0.10)' : 'transparent' }};">
-                    <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;flex-shrink:0;background:{{ $isActive ? 'var(--accent)' : 'transparent' }};color:{{ $isActive ? '#fff' : 'inherit' }};transition:background 0.15s;">
+                    <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;flex-shrink:0;background:transparent;color:inherit;transition:background 0.15s;">
                         <x-agent-icon :name="$item['icon']" />
                     </span>
                     <span class="sidebar-label" style="font-size:13px;">{{ $item['label'] }}</span>
-                    @if($isActive)
-                        <span class="sidebar-label" style="margin-left:auto;width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;"></span>
-                    @endif
                 </a>
             @endforeach
         </nav>
@@ -179,13 +174,7 @@
 
                 {{-- Header --}}
                 <div style="display:flex;align-items:center;gap:10px;padding:0 16px 18px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:10px;flex-shrink:0;">
-                    <div style="width:32px;height:32px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M2 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" fill="white" fill-opacity=".2" stroke="white" stroke-width="1.2"/>
-                            <path d="M5 4V3a3 3 0 016 0v1" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
-                            <path d="M5.5 8.5l1.5 1.5 3.5-3" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
+                    <img src="{{ asset('brand/lipa-icon-white.svg') }}" alt="Lipa" width="32" height="32" style="flex-shrink:0;display:block;" />
                     <div style="flex:1;min-width:0;">
                         <div style="color:#fff;font-weight:800;font-size:15px;letter-spacing:-0.03em;line-height:1;">Lipa</div>
                         <div style="color:rgba(255,255,255,0.32);font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;">Agent Portal</div>
@@ -208,13 +197,10 @@
                            wire:navigate
                            @click="drawer = false"
                            style="display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:9px;text-decoration:none;font-weight:{{ $isActive ? '700' : '500' }};color:{{ $isActive ? '#fff' : 'rgba(255,255,255,0.55)' }};background:{{ $isActive ? 'rgba(255,255,255,0.10)' : 'transparent' }};font-size:14px;">
-                            <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;flex-shrink:0;background:{{ $isActive ? 'var(--accent)' : 'rgba(255,255,255,0.04)' }};color:{{ $isActive ? '#fff' : 'inherit' }};">
+                            <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;flex-shrink:0;background:rgba(255,255,255,0.04);color:inherit;">
                                 <x-agent-icon :name="$item['icon']" size="18" />
                             </span>
                             <span>{{ $item['label'] }}</span>
-                            @if($isActive)
-                                <span style="margin-left:auto;width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;"></span>
-                            @endif
                         </a>
                     @endforeach
                 </nav>

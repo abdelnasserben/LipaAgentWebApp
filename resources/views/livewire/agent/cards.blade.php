@@ -10,8 +10,8 @@
         <div class="mx-auto flex max-w-5xl px-4 md:px-6">
             @php
                 $tabs = [
-                    ['key' => 'sell', 'label' => 'Vendre', 'color' => 'text-app-purple'],
-                    ['key' => 'report', 'label' => 'Déclarer', 'color' => 'text-app-amber'],
+                    ['key' => 'sell', 'label' => 'Vendre', 'color' => 'text-app-accent'],
+                    ['key' => 'report', 'label' => 'Déclarer', 'color' => 'text-app-accent'],
                     ['key' => 'replace', 'label' => 'Remplacer', 'color' => 'text-app-accent'],
                 ];
             @endphp
@@ -24,12 +24,7 @@
                 ])>
                     {{ $tab['label'] }}
                     @if ($activeTab === $tab['key'])
-                        <span @class([
-                            'absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-t-sm',
-                            'bg-app-purple' => $tab['key'] === 'sell',
-                            'bg-app-amber' => $tab['key'] === 'report',
-                            'bg-app-accent' => $tab['key'] === 'replace',
-                        ])></span>
+                        <span class="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-t-sm bg-app-accent"></span>
                     @endif
                 </button>
             @endforeach
@@ -77,7 +72,7 @@
                                         </div>
                                         <input type="tel" wire:model.blur="sellPhoneNumber" placeholder="3XX XXXX"
                                             inputmode="numeric" wire:keydown.enter="lookupSellCustomer"
-                                            class="box-border min-w-0 flex-1 rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base tracking-[0.05em] text-app-text outline-none focus:border-app-purple" />
+                                            class="box-border min-w-0 flex-1 rounded-lg border-[1.5px] border-app-border bg-app-surface px-3.5 py-3 font-mono text-base tracking-[0.05em] text-app-text outline-none focus:border-app-accent" />
                                     </div>
                                     @error('sellPhoneNumber')
                                         <p class="mt-1 text-[11px] text-app-red">{{ $message }}</p>
@@ -86,7 +81,7 @@
 
                                 <div class="flex justify-end">
                                     <button wire:click="lookupSellCustomer" wire:loading.attr="disabled" type="button"
-                                        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-purple p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-48">
+                                        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-48">
                                         <span wire:loading.remove wire:target="lookupSellCustomer"
                                             class="flex items-center gap-2">
                                             <x-agent-icon name="search" :size="16" />
@@ -111,9 +106,9 @@
                                 </button>
 
                                 <div
-                                    class="mb-5 flex items-center gap-3 rounded-xl border-[1.5px] border-app-purple bg-app-purple-bg p-4">
+                                    class="mb-5 flex items-center gap-3 rounded-xl border-[1.5px] border-app-accent bg-app-accent-bg p-4">
                                     <div
-                                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-app-purple text-xl font-extrabold text-white">
+                                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-app-accent text-xl font-extrabold text-white">
                                         {{ mb_strtoupper(mb_substr($sellCustomer['fullName'] ?? '?', 0, 1)) }}
                                     </div>
                                     <div class="min-w-0">
@@ -156,12 +151,12 @@
                                                 <button wire:click="selectSellCard('{{ $card['nfcUid'] ?? '' }}')"
                                                     type="button" @class([
                                                         'flex w-full cursor-pointer items-center gap-3 rounded-[10px] px-3.5 py-3 text-left',
-                                                        'border-2 border-app-purple bg-app-purple-bg' => $selected,
+                                                        'border-2 border-app-accent bg-app-accent-bg' => $selected,
                                                         'border-[1.5px] border-app-border bg-app-bg' => !$selected,
                                                     ])>
                                                     <div @class([
                                                         'h-2 w-2 shrink-0 rounded-full border-2',
-                                                        'border-app-purple bg-app-purple' => $selected,
+                                                        'border-app-accent bg-app-accent' => $selected,
                                                         'border-app-muted bg-transparent' => !$selected,
                                                     ])></div>
 
@@ -177,7 +172,7 @@
 
                                                     @if ($selected)
                                                         <x-agent-icon name="check" :size="16"
-                                                            class="shrink-0 text-app-purple" />
+                                                            class="shrink-0 text-app-accent" />
                                                     @endif
                                                 </button>
                                             @endforeach
@@ -195,7 +190,7 @@
                                     </label>
                                     <div class="relative">
                                         <input type="number" wire:model="sellCardPrice" min="1" placeholder="0"
-                                            class="box-border w-full rounded-[10px] border-2 border-app-border bg-app-surface py-3 pl-4 pr-14 font-mono text-xl font-bold tracking-[-0.02em] text-app-text outline-none focus:border-app-purple" />
+                                            class="box-border w-full rounded-[10px] border-2 border-app-border bg-app-surface py-3 pl-4 pr-14 font-mono text-xl font-bold tracking-[-0.02em] text-app-text outline-none focus:border-app-accent" />
                                         <span
                                             class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-app-muted">KMF</span>
                                     </div>
@@ -206,7 +201,7 @@
 
                                 <div class="flex justify-end">
                                     <button wire:click="submitSell" wire:loading.attr="disabled" type="button"
-                                        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-purple p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-52">
+                                        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-app-accent p-3.5 text-[15px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70 md:w-auto md:min-w-52">
                                         <span wire:loading.remove wire:target="submitSell">Vendre la carte</span>
                                         <span wire:loading.flex wire:target="submitSell"
                                             class="hidden items-center gap-2">
@@ -246,7 +241,7 @@
 
                                 <div class="mt-4 flex justify-end">
                                     <button wire:click="resetSell" type="button"
-                                        class="cursor-pointer rounded-[10px] border-0 bg-app-purple px-4 py-2.5 text-[13px] font-bold text-white">
+                                        class="cursor-pointer rounded-[10px] border-0 bg-app-accent px-4 py-2.5 text-[13px] font-bold text-white">
                                         Nouvelle vente
                                     </button>
                                 </div>
